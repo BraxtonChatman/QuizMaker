@@ -40,12 +40,68 @@ main_menu.add_cascade(label = "Edit", menu = edit_menu)
 main_menu.add_cascade(label = "Quiz", menu = quiz_menu)
 
 
-# question_label = tk.Label(work_window, text = "Question (1): ", font = "bold")
-# question_label.grid(row = 1, column = 0, pady = (10, 40))
-# question_text = tk.Text(work_window, width = 50, height = 3)
-# question_text.grid(row = 1, column = 1, columnspan=5, pady = (10, 40))
+## Label Frames ########################################################
+sidebar = tk.LabelFrame(window, text = "Question List", font = "bold")
+current_question = tk.LabelFrame(window, text = "Current Question", font = "bold")
+current_answer = tk.LabelFrame(window, text = "Answer", font = "bold")
+options = tk.LabelFrame(window, text = "Options", font = "bold")
+
+sidebar.pack(side="left", padx = 10, pady = 10)
+current_question.pack(pady = 10)
+current_answer.pack(pady = 10)
+options.pack(expand=True, fill = tk.X, pady = 10, ipady = 5)
 
 
+## Sidebar ##############################################################
+side_scroll = tk.Scrollbar(sidebar)
+side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
+scroll_list = tk.Listbox(sidebar, yscrollcommand=side_scroll.set, height = 25, width = 40)
+
+for line in range(1, 200):
+    scroll_list.insert(tk.END, "List item #"+str(line))
+
+scroll_list.pack(side="left", pady = (10,0))
+side_scroll.config(command = scroll_list.yview)
+
+
+## Question #############################################################
+question_text = tk.Text(current_question, height = 6, width = 60)
+question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
+
+
+## Answer ###############################################################
+answer_label = tk.Label(current_answer, text = "Answer")
+answer_text = tk.Text(current_answer, height = 6, width = 60)
+response_type_label = tk.Label(current_answer, text = "Response Type")
+response_type = ttk.Combobox(current_answer, values = ["Multiple Choice", "Check All", "True or False", "Written Response"], state = "readonly")
+
+#answer_label.grid(row = 0, column = 0, columnspan=2)
+response_type_label.grid(row = 1, column = 1, pady = 5, sticky="e")
+response_type.grid(row = 1, column = 2, pady = 5)
+answer_text.grid(row =2, column = 0, columnspan=3)
+
+
+## Options ##############################################################
+add_question_button = tk.Button(options, text = "Add Question")
+del_question_button = tk.Button(options, text = "Delete Question")
+prev_button = tk.Button(options, text = "Previous", width = 7)
+next_button = tk.Button(options, text = "Next", width = 7)
+save_button = tk.Button(options, text = "Save", width = 7)
+fin_button = tk.Button(options, text = "Finish", width = 7)
+
+prev_button.grid(row = 0, column = 0)
+next_button.grid(row = 0, column = 1)
+add_question_button.grid(row = 0, column = 2)
+del_question_button.grid(row = 0, column = 3)
+save_button.grid(row = 0, column = 4)
+fin_button.grid(row = 0, column = 5)
+
+for widget in options.winfo_children():
+    widget.grid_configure(padx = 5, pady = (6, 3))
+
+
+
+##
 
 # true_label = tk.Label(work_window, text = "True:", font = "bold")
 # true_text = tk.Text(work_window, height = 3, width = 50)
@@ -56,67 +112,6 @@ main_menu.add_cascade(label = "Quiz", menu = quiz_menu)
 # true_text.grid(row = 3, column=1, columnspan=5, pady = 5)
 # false_label.grid(row = 4, column=0)
 # false_text.grid(row = 4, column=1, columnspan=5, pady = 5)
-
-
-# prev_button = tk.Button(work_window, text = "Previous", width = 7)
-# next_button = tk.Button(work_window, text = "Next", width = 7)
-# save_button = tk.Button(work_window, text = "Save", width = 7)
-# del_button = tk.Button(work_window, text = "Delete Question")
-# fin_button = tk.Button(work_window, text = "Finish", width = 7)
-
-# prev_button.grid(row = 12, column = 1, sticky = "w")
-# next_button.grid(row = 12, column = 2, sticky = "w")
-# save_button.grid(row = 12, column=3, pady = 10, sticky = "e")
-# del_button.grid(row = 12, column=4, pady = 10, sticky = "e")
-# fin_button.grid(row=12, column=5, pady = 10, sticky = "e")
-
-
-## Label Frames ########################################################
-sidebar = tk.LabelFrame(window, text="Questions")
-current_question = tk.LabelFrame(window, text = "Current Question")
-current_answer = tk.LabelFrame(window, text = "Answer")
-
-sidebar.grid(row = 0, column = 0, rowspan = 2)
-current_question.grid(row = 0, column = 1)
-current_answer.grid(row = 1, column = 1)
-
-
-## Sidebar ##############################################################
-temp_label = tk.Label(sidebar, text="Question 1")
-temp_label2 = tk.Label(sidebar, text = "Question 2")
-
-side_scroll = tk.Scrollbar(sidebar)
-side_scroll.pack(side="right", fill = tk.Y)
-
-my_list = tk.Listbox(sidebar, yscrollcommand=side_scroll.set)
-for line in range(1, 23):
-    my_list.insert(tk.END, "List item #"+str(line))
-
-my_list.pack(side="left", fill = tk.BOTH)
-
-side_scroll.config(command = my_list.yview)
-
-
-## Question #############################################################
-question_label = tk.Label(current_question, text = "Question")
-question_text = tk.Text(current_question, height = 3, width = 50)
-
-question_label.grid(row = 0, column = 0)
-question_text.grid(row = 1, column = 0)
-
-
-
-## Answer ###############################################################
-answer_label = tk.Label(current_answer, text = "Answer")
-answer_text = tk.Text(current_answer, height = 3, width = 50)
-response_type_label = tk.Label(current_answer, text = "Response Type")
-response_type = ttk.Combobox(current_answer, values = ["Multiple Choice", "Check All", "True or False", "Written Response"], state = "readonly")
-
-#answer_label.grid(row = 0, column = 0, columnspan=2)
-response_type_label.grid(row = 1, column = 1, pady = 5, sticky="e")
-response_type.grid(row = 1, column = 2, pady = 5)
-answer_text.grid(row =2, column = 0, columnspan=3)
-
 
 
 
