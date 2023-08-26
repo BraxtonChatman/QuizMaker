@@ -1,22 +1,84 @@
 import tkinter as tk
 from tkinter import ttk
 
+class Quiz():
+    """Class representing the quiz. Contains list of Question objects as well as positional
+    data and functions to modify questions."""
+
+    def __init__(self):
+        self.title = ""
+        self.q_list = []
+        self.length = 0
+        self.current_q = None
+
+    def change_title(self):
+        pass
+
+    def goto_q(self, num):
+        pass
+
+    def add_question(self, index):
+        pass
+
+    def del_question(self, index):
+        pass
+
+    def save_file(self):
+        pass
+
+    def read_file(self):
+        pass
+
+    def next_q(self):
+        pass
+
+    def prev_q(self):
+        pass
+
+
+class Question():
+    """Class representing a question on the quiz. type represents what kind of response
+    the question expects (Multiple choice, check all, true/false, or written), q_text represents
+    the question text as a string, answer represents the answer text as a string for questions that
+    have set answers (all but written response), options is a list of strings representing the available
+    options to answer."""
+
+    def __init__(self):
+        self.type = None
+        self.q_text = ""
+        self.answer = ""
+        self.options = []
+
+    def add_option(self):
+        pass
+
+    def rem_option(self):
+        pass
+
+
+class QuizGui(tk.Tk):
+    """Class for GUI representation of Quiz"""
+
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.title("Quiz Maker")
+        self.geometry("800x450")
+        self.state("zoomed")
+
+
 def filler_command():
     pass
 
 
-root = tk.Tk()
-root.title("Quiz Maker")
-root.geometry("400x400")
-root.state("zoomed")
+quizzer = QuizGui()
 
-window = tk.Frame(root)
+window = tk.Frame(quizzer)
 window.pack()
 
 
 # Menu bar ###########################################################################
 main_menu = tk.Menu(window)
-root.config(menu = main_menu)
+quizzer.config(menu = main_menu)
 
 file_menu = tk.Menu(main_menu, tearoff = 0)
 edit_menu = tk.Menu(main_menu, tearoff = 0)
@@ -27,9 +89,10 @@ file_menu.add_command(label = "Open Quiz")
 file_menu.add_command(label = "Save Quiz")
 file_menu.add_command(label = "Save As")
 
-edit_menu.add_command(label = "Edit Quiz", command=filler_command)
+edit_menu.add_command(label = "Change Question Order", command=filler_command)
 edit_menu.add_command(label = "Add Question")
 edit_menu.add_command(label = "Delete Question")
+edit_menu.add_command(label = "Change Quiz Title")
 
 quiz_menu.add_command(label = "Run Quiz")
 quiz_menu.add_command(label = "Stop Quiz")
@@ -45,6 +108,7 @@ sidebar = tk.LabelFrame(window, text = "Question List", font = "bold")
 current_question = tk.LabelFrame(window, text = "Current Question", font = "bold")
 current_answer = tk.LabelFrame(window, text = "Answer", font = "bold")
 options = tk.LabelFrame(window, text = "Options", font = "bold")
+
 
 sidebar.pack(side="left", padx = 10, pady = 10)
 current_question.pack(pady = 10)
@@ -101,6 +165,8 @@ for widget in options.winfo_children():
 
 
 
+
+
 ##
 
 # true_label = tk.Label(work_window, text = "True:", font = "bold")
@@ -115,8 +181,8 @@ for widget in options.winfo_children():
 
 
 
-
-root.mainloop()
+quizzer.mainloop()
+# root.mainloop()
 
 
 
