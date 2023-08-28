@@ -46,7 +46,7 @@ class Question():
     options to answer."""
 
     def __init__(self):
-        self.type = None
+        self.type = ""
         self.q_text = ""
         self.answer = ""
         self.options = []
@@ -122,15 +122,17 @@ class QuizGui(tk.Tk):
 
 
         ## Sidebar ######################################################################
-        side_scroll = tk.Scrollbar(sidebar)
-        side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
-        scroll_list = tk.Listbox(sidebar, yscrollcommand=side_scroll.set, height = 25, width = 40)
+        self.side_scroll = tk.Scrollbar(sidebar)
+        self.side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
+        self.scroll_list = tk.Listbox(sidebar, yscrollcommand=self.side_scroll.set, height = 25, width = 50)
+        self.sidebar_list = []
 
-        for line in range(1, 200):
-            scroll_list.insert(tk.END, "List item #"+str(line))
+        # for line in range(1, 10):
+        #     sidebar_q = str(line)+ ". Question limited to 20".strip()[:20]+"..."+"     MC"
+        #     self.scroll_list.insert(tk.END, sidebar_q)
 
-        scroll_list.pack(side="left", pady = (10,0))
-        side_scroll.config(command = scroll_list.yview)
+        self.scroll_list.pack(side="left", pady = (10,0))
+        self.side_scroll.config(command = self.scroll_list.yview)
 
 
         ## Question ######################################################################
@@ -164,6 +166,7 @@ class QuizGui(tk.Tk):
         fin_button.grid(row = 0, column = 5)
 
         for widget in options.winfo_children():
+            widget.configure(borderwidth = 3)
             widget.grid_configure(padx = 5, pady = (6, 3))
 
 
@@ -171,9 +174,17 @@ class QuizGui(tk.Tk):
         """change the answer window on the screen according to the response type"""
         pass
 
-    def add_sidebar(self, question):
+    def print_sidebar(self, quiz):
+        """"""
+
+    def add_sidebar(self, quiz):
         """add an indicated question to the screen sidebar"""
-        pass
+        current_question = quiz.current_q
+        new_question = quiz.q_list[current_question].q_text
+
+        sidebar_string = str(current_question) + new_question[:30] + "     " + quiz.q_list[current_question].type
+        self.sidebar_list.insert(current_question, sidebar_string)
+        self.scroll_list.insert(tk.END, self.sidebar_list[0])
 
     def rem_sidebar(self, question):
         """remove an indicated question from the screen sidebar"""
@@ -193,4 +204,23 @@ def filler_command():
 
 if __name__ == "__main__":
     quizzer = QuizGui()
+
+    my_question = Question()
+    my_question.q_text = "What is my birthday"
+
+    my_quiz = Quiz()
+    my_quiz.q_list.append(my_question)
+    my_quiz.current_q = 0
+
+    quizzer.add_sidebar(my_quiz)
+
+
     quizzer.mainloop()
+
+
+
+# TODO
+# Working on add_sidebar function
+# make test question and quiz for it
+
+# then remove sidebar
