@@ -54,8 +54,6 @@ class Quiz():
         pass
 
 
-
-
 class Question():
     """Class representing a question on the quiz. type represents what kind of response
     the question expects (Multiple choice, check all, true/false, or written), q_text represents
@@ -71,6 +69,7 @@ class Question():
 
     def add_option(self):
         """Add an option to the options list"""
+        pass
 
     def rem_option(self, option_index):
         """Remove an answer option from options list"""
@@ -187,6 +186,9 @@ class QuizGui(tk.Tk):
             widget.configure(borderwidth = 3)
             widget.grid_configure(padx = 5, pady = (6, 3))
 
+    def print_question(self):
+        """Display the currently selected Question in the GUI question and answer frames"""
+        self.
 
     def change_answer_window(self, answer_type):
         """change the answer window on the screen according to the response type"""
@@ -237,19 +239,14 @@ if __name__ == "__main__":
 
 
 # TODO
-# Working on add_sidebar function
-# make test question and quiz for it
-# then remove sidebar
 
+# Clean QuizGui.__init__
+    # add self. to proper variables
+
+
+# EDIT QuizGui.add_sidebar to use self.quiz
 
 # QuizGui clear and reisnsert for update sidebar
-
-# Quiz.add_question
-    # use list.insert
-    # Question number is index in q_list
-
-# Quiz.remove_question
-    # use list.pop
 
 # QuizGui.print_question
     # called whenever Quiz.add, .next, .prev, .goto_q
