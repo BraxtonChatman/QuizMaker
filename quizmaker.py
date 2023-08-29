@@ -1,15 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
 
+
 class Quiz():
     """Class representing the quiz. Contains list of Question objects as well as positional
     data and functions to modify questions."""
 
     def __init__(self):
         self.title = ""
-        self.q_list = []
-        self.length = 0
-        self.current_q = None
+        self.q_list = [Question()]
+        self.length = 1
+        self.current_q = 0
 
     def change_title(self, new_title):
         """Change quiz title"""
@@ -17,13 +18,34 @@ class Quiz():
 
     def goto_q(self, num):
         """Change current question to the indicated question number, if valid"""
-        pass
+        self.current_q = num
 
-    def add_question(self, index):
-        pass
+    def add_question(self):
+        """Adds a question to q_list after index current_q"""
+        self.q_list.insert(self.current_q + 1, Question())
+        self.length += 1
+        return True
 
     def del_question(self, index):
-        pass
+        """Delete the current question"""
+        if self.length > 1:
+            self.q_list.pop(index)
+            self.length -= 1
+            return True
+        else:
+            return False
+        
+    def next_q(self):
+        """Moves question focus to the next question in q_list if it exists"""
+        if self.current_q < self.length - 1:
+            self.current_q += 1
+        return self.current_q
+
+    def prev_q(self):
+        """Moves question focus to the previous question in q_list if it exists"""
+        if self.current_q > 0:
+            self.current_q -= 1
+        return self.current_q
 
     def save_file(self):
         pass
@@ -31,11 +53,7 @@ class Quiz():
     def read_file(self):
         pass
 
-    def next_q(self):
-        pass
 
-    def prev_q(self):
-        pass
 
 
 class Question():
@@ -45,11 +63,11 @@ class Question():
     have set answers (all but written response), options is a list of strings representing the available
     options to answer."""
 
-    def __init__(self):
-        self.type = ""
-        self.q_text = ""
-        self.answer = ""
-        self.options = []
+    def __init__(self, text = "", type = "", response = "", resp_list = []):
+        self.type = type
+        self.q_text = text
+        self.answer = response
+        self.options = resp_list
 
     def add_option(self):
         """Add an option to the options list"""
@@ -205,8 +223,7 @@ def filler_command():
 if __name__ == "__main__":
     quizzer = QuizGui()
 
-    my_question = Question()
-    my_question.q_text = "What is my birthday"
+    my_question = Question("What is my birthday?")
 
     my_quiz = Quiz()
     my_quiz.q_list.append(my_question)
@@ -222,5 +239,18 @@ if __name__ == "__main__":
 # TODO
 # Working on add_sidebar function
 # make test question and quiz for it
-
 # then remove sidebar
+
+
+# QuizGui clear and reisnsert for update sidebar
+
+# Quiz.add_question
+    # use list.insert
+    # Question number is index in q_list
+
+# Quiz.remove_question
+    # use list.pop
+
+# QuizGui.print_question
+    # called whenever Quiz.add, .next, .prev, .goto_q
+    # updates answer and question frames
