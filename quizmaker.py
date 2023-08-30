@@ -89,59 +89,44 @@ class QuizGui(tk.Tk):
     """Class for GUI representation of Quiz"""
 
     def __init__(self):
-        self.quiz = Quiz()
-
+        
+        # initialize root and main window
         tk.Tk.__init__(self)
         self.title("Quiz Maker")
         self.geometry("800x450")
         self.state("zoomed")
 
+        # main window and label frames
         self.window = tk.Frame(self)
+        self.sidebar = tk.LabelFrame(self.window, text = "Question List", font = "bold")
+        self.current_question = tk.LabelFrame(self.window, text = "Current Question", font = "bold")
+        self.current_answer = tk.LabelFrame(self.window, text = "Answer", font = "bold")
+        self.options = tk.LabelFrame(self.window, text = "Options", font = "bold")
+
+
+
+
         self.window.pack()
 
+
+        self.quiz = Quiz()
+
+
         # Menu bar ######################################################################
-        main_menu = tk.Menu(self.window)
-        self.config(menu = main_menu)
-
-        file_menu = tk.Menu(main_menu, tearoff = 0)
-        edit_menu = tk.Menu(main_menu, tearoff = 0)
-        quiz_menu = tk.Menu(main_menu, tearoff = 0)
-
-        file_menu.add_command(label = "New Quiz", command= filler_command)
-        file_menu.add_command(label = "Open Quiz")
-        file_menu.add_command(label = "Save Quiz")
-        file_menu.add_command(label = "Save As")
-
-        edit_menu.add_command(label = "Change Question Order", command=filler_command)
-        edit_menu.add_command(label = "Add Question")
-        edit_menu.add_command(label = "Delete Question")
-        edit_menu.add_command(label = "Change Quiz Title")
-
-        quiz_menu.add_command(label = "Run Quiz")
-        quiz_menu.add_command(label = "Stop Quiz")
-        quiz_menu.add_command(label = "Question Weights")
-
-        main_menu.add_cascade(label = "File", menu = file_menu)
-        main_menu.add_cascade(label = "Edit", menu = edit_menu)
-        main_menu.add_cascade(label = "Quiz", menu = quiz_menu)
-
-        # Label Frames ########################################################
-        sidebar = tk.LabelFrame(self.window, text = "Question List", font = "bold")
-        current_question = tk.LabelFrame(self.window, text = "Current Question", font = "bold")
-        current_answer = tk.LabelFrame(self.window, text = "Answer", font = "bold")
-        options = tk.LabelFrame(self.window, text = "Options", font = "bold")
+        self.make_menu()
 
 
-        sidebar.pack(side="left", padx = 10, pady = 10)
-        current_question.pack(pady = 10)
-        current_answer.pack(pady = 10)
-        options.pack(expand=True, fill = tk.X, pady = 10, ipady = 5)
+
+        self.sidebar.pack(side="left", padx = 10, pady = 10)
+        self.current_question.pack(pady = 10)
+        self.current_answer.pack(pady = 10)
+        self.options.pack(expand=True, fill = tk.X, pady = 10, ipady = 5)
 
 
         ## Sidebar ######################################################################
-        self.side_scroll = tk.Scrollbar(sidebar)
+        self.side_scroll = tk.Scrollbar(self.sidebar)
         self.side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
-        self.scroll_list = tk.Listbox(sidebar, yscrollcommand=self.side_scroll.set, height = 25, width = 50)
+        self.scroll_list = tk.Listbox(self.sidebar, yscrollcommand=self.side_scroll.set, height = 25, width = 50)
         self.sidebar_list = []
 
         # for line in range(1, 10):
@@ -153,14 +138,14 @@ class QuizGui(tk.Tk):
 
 
         ## Question ######################################################################
-        question_text = tk.Text(current_question, height = 6, width = 60)
+        question_text = tk.Text(self.current_question, height = 6, width = 60)
         question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
 
 
         ## Answer ######################################################################
-        answer_text = tk.Text(current_answer, height = 6, width = 60)
-        response_type_label = tk.Label(current_answer, text = "Response Type")
-        response_type = ttk.Combobox(current_answer, values = ["Multiple Choice", "Check All", "True or False", "Written Response"], state = "readonly")
+        answer_text = tk.Text(self.current_answer, height = 6, width = 60)
+        response_type_label = tk.Label(self.current_answer, text = "Response Type")
+        response_type = ttk.Combobox(self.current_answer, values = ["Multiple Choice", "Check All", "True or False", "Written Response"], state = "readonly")
 
         response_type_label.grid(row = 1, column = 1, pady = 5, sticky="e")
         response_type.grid(row = 1, column = 2, pady = 5)
@@ -168,27 +153,77 @@ class QuizGui(tk.Tk):
 
 
         ## Options ######################################################################
-        add_question_button = tk.Button(options, text = "Add Question")
-        del_question_button = tk.Button(options, text = "Delete Question")
-        prev_button = tk.Button(options, text = "Previous", width = 7)
-        next_button = tk.Button(options, text = "Next", width = 7)
-        save_button = tk.Button(options, text = "Save", width = 7)
-        fin_button = tk.Button(options, text = "Finish", width = 7)
+        self.add_question_button = tk.Button(self.options, text = "Add Question")
+        self.del_question_button = tk.Button(self.options, text = "Delete Question")
+        self.prev_button = tk.Button(self.options, text = "Previous", width = 7)
+        self.next_button = tk.Button(self.options, text = "Next", width = 7)
+        self.save_button = tk.Button(self.options, text = "Save", width = 7)
+        self.fin_button = tk.Button(self.options, text = "Finish", width = 7)
 
-        prev_button.grid(row = 0, column = 0)
-        next_button.grid(row = 0, column = 1)
-        add_question_button.grid(row = 0, column = 2)
-        del_question_button.grid(row = 0, column = 3)
-        save_button.grid(row = 0, column = 4)
-        fin_button.grid(row = 0, column = 5)
+        self.prev_button.grid(row = 0, column = 0)
+        self.next_button.grid(row = 0, column = 1)
+        self.add_question_button.grid(row = 0, column = 2)
+        self.del_question_button.grid(row = 0, column = 3)
+        self.save_button.grid(row = 0, column = 4)
+        self.fin_button.grid(row = 0, column = 5)
 
-        for widget in options.winfo_children():
+        for widget in self.options.winfo_children():
             widget.configure(borderwidth = 3)
             widget.grid_configure(padx = 5, pady = (6, 3))
 
+
+    def make_menu(self):
+        """Creates the menu bar and options at the top of the screen"""
+        self.main_menu = tk.Menu(self.window)
+        self.config(menu = self.main_menu)
+
+        # Menu options "File", "Edit", "Quiz"
+        file_menu = tk.Menu(self.main_menu, tearoff = 0)
+        edit_menu = tk.Menu(self.main_menu, tearoff = 0)
+        quiz_menu = tk.Menu(self.main_menu, tearoff = 0)
+        self.main_menu.add_cascade(label = "File", menu = file_menu)
+        self.main_menu.add_cascade(label = "Edit", menu = edit_menu)
+        self.main_menu.add_cascade(label = "Quiz", menu = quiz_menu)
+
+        # File tab suboptions
+        file_menu.add_command(label = "New Quiz", command= filler_command)
+        file_menu.add_command(label = "Open Quiz")
+        file_menu.add_command(label = "Save Quiz")
+        file_menu.add_command(label = "Save As")
+
+        # Edit tab suboptions
+        edit_menu.add_command(label = "Change Question Order", command=filler_command)
+        edit_menu.add_command(label = "Add Question")
+        edit_menu.add_command(label = "Delete Question")
+        edit_menu.add_command(label = "Change Quiz Title")
+
+        # Quiz tab suboptions
+        quiz_menu.add_command(label = "Run Quiz")
+        quiz_menu.add_command(label = "Stop Quiz")
+        quiz_menu.add_command(label = "Question Weights")
+
+
+    def make_aframe(self):
+        """Create answer frame"""
+        pass
+
+    def make_qframe(self):
+        """Create question frame"""
+        pass
+
+    def make_sframe(self):
+        """Create sidebar frame"""
+        pass
+
+    def make_oframe(self):
+        """Create options frame"""
+        pass
+
+
+
     def print_question(self):
         """Display the currently selected Question in the GUI question and answer frames"""
-        self.
+        pass
 
     def change_answer_window(self, answer_type):
         """change the answer window on the screen according to the response type"""
