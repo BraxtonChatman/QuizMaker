@@ -89,12 +89,14 @@ class QuizGui(tk.Tk):
     """Class for GUI representation of Quiz"""
 
     def __init__(self):
-        
         # initialize root and main window
         tk.Tk.__init__(self)
         self.title("Quiz Maker")
         self.geometry("800x450")
         self.state("zoomed")
+
+        # Quiz variable of GUI
+        self.quiz = Quiz()
 
         # main window and label frames
         self.window = tk.Frame(self)
@@ -103,74 +105,18 @@ class QuizGui(tk.Tk):
         self.current_answer = tk.LabelFrame(self.window, text = "Answer", font = "bold")
         self.options = tk.LabelFrame(self.window, text = "Options", font = "bold")
 
-
-
-
         self.window.pack()
-
-
-        self.quiz = Quiz()
-
-
-        # Menu bar ######################################################################
-        self.make_menu()
-
-
-
         self.sidebar.pack(side="left", padx = 10, pady = 10)
         self.current_question.pack(pady = 10)
         self.current_answer.pack(pady = 10)
         self.options.pack(expand=True, fill = tk.X, pady = 10, ipady = 5)
 
-
-        ## Sidebar ######################################################################
-        self.side_scroll = tk.Scrollbar(self.sidebar)
-        self.side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
-        self.scroll_list = tk.Listbox(self.sidebar, yscrollcommand=self.side_scroll.set, height = 25, width = 50)
-        self.sidebar_list = []
-
-        # for line in range(1, 10):
-        #     sidebar_q = str(line)+ ". Question limited to 20".strip()[:20]+"..."+"     MC"
-        #     self.scroll_list.insert(tk.END, sidebar_q)
-
-        self.scroll_list.pack(side="left", pady = (10,0))
-        self.side_scroll.config(command = self.scroll_list.yview)
-
-
-        ## Question ######################################################################
-        question_text = tk.Text(self.current_question, height = 6, width = 60)
-        question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
-
-
-        ## Answer ######################################################################
-        answer_text = tk.Text(self.current_answer, height = 6, width = 60)
-        response_type_label = tk.Label(self.current_answer, text = "Response Type")
-        response_type = ttk.Combobox(self.current_answer, values = ["Multiple Choice", "Check All", "True or False", "Written Response"], state = "readonly")
-
-        response_type_label.grid(row = 1, column = 1, pady = 5, sticky="e")
-        response_type.grid(row = 1, column = 2, pady = 5)
-        answer_text.grid(row =2, column = 0, columnspan=3)
-
-
-        ## Options ######################################################################
-        self.add_question_button = tk.Button(self.options, text = "Add Question")
-        self.del_question_button = tk.Button(self.options, text = "Delete Question")
-        self.prev_button = tk.Button(self.options, text = "Previous", width = 7)
-        self.next_button = tk.Button(self.options, text = "Next", width = 7)
-        self.save_button = tk.Button(self.options, text = "Save", width = 7)
-        self.fin_button = tk.Button(self.options, text = "Finish", width = 7)
-
-        self.prev_button.grid(row = 0, column = 0)
-        self.next_button.grid(row = 0, column = 1)
-        self.add_question_button.grid(row = 0, column = 2)
-        self.del_question_button.grid(row = 0, column = 3)
-        self.save_button.grid(row = 0, column = 4)
-        self.fin_button.grid(row = 0, column = 5)
-
-        for widget in self.options.winfo_children():
-            widget.configure(borderwidth = 3)
-            widget.grid_configure(padx = 5, pady = (6, 3))
-
+        # Generate menu and content of labelframes in window
+        self.make_menu()
+        self.make_sframe()
+        self.make_qframe()
+        self.make_aframe()
+        self.make_oframe()
 
     def make_menu(self):
         """Creates the menu bar and options at the top of the screen"""
@@ -202,22 +148,54 @@ class QuizGui(tk.Tk):
         quiz_menu.add_command(label = "Stop Quiz")
         quiz_menu.add_command(label = "Question Weights")
 
+    def make_sframe(self):
+        """Fill sidebar frame"""
+        self.side_scroll = tk.Scrollbar(self.sidebar)
+        self.side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
+        self.scroll_list = tk.Listbox(self.sidebar, yscrollcommand=self.side_scroll.set, height = 25, width = 50)
+        self.sidebar_list = []
 
-    def make_aframe(self):
-        """Create answer frame"""
-        pass
+        # for line in range(1, 10):
+        #     sidebar_q = str(line)+ ". Question limited to 20".strip()[:20]+"..."+"     MC"
+        #     self.scroll_list.insert(tk.END, sidebar_q)
+
+        self.scroll_list.pack(side="left", pady = (10,0))
+        self.side_scroll.config(command = self.scroll_list.yview)
 
     def make_qframe(self):
-        """Create question frame"""
-        pass
+        """Fill question frame"""
+        question_text = tk.Text(self.current_question, height = 6, width = 60)
+        question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
 
-    def make_sframe(self):
-        """Create sidebar frame"""
-        pass
+    def make_aframe(self):
+        """Fill answer frame"""
+        answer_text = tk.Text(self.current_answer, height = 6, width = 60)
+        response_type_label = tk.Label(self.current_answer, text = "Response Type")
+        response_type = ttk.Combobox(self.current_answer, values = ["Multiple Choice", "Check All", "True or False", "Written Response"], state = "readonly")
+
+        response_type_label.grid(row = 1, column = 1, pady = 5, sticky="e")
+        response_type.grid(row = 1, column = 2, pady = 5)
+        answer_text.grid(row =2, column = 0, columnspan=3)
 
     def make_oframe(self):
-        """Create options frame"""
-        pass
+        """Fill options frame"""
+        self.add_question_button = tk.Button(self.options, text = "Add Question")
+        self.del_question_button = tk.Button(self.options, text = "Delete Question")
+        self.prev_button = tk.Button(self.options, text = "Previous", width = 7)
+        self.next_button = tk.Button(self.options, text = "Next", width = 7)
+        self.save_button = tk.Button(self.options, text = "Save", width = 7)
+        self.fin_button = tk.Button(self.options, text = "Finish", width = 7)
+
+        self.prev_button.grid(row = 0, column = 0)
+        self.next_button.grid(row = 0, column = 1)
+        self.add_question_button.grid(row = 0, column = 2)
+        self.del_question_button.grid(row = 0, column = 3)
+        self.save_button.grid(row = 0, column = 4)
+        self.fin_button.grid(row = 0, column = 5)
+
+        for widget in self.options.winfo_children():
+            widget.configure(borderwidth = 3)
+            widget.grid_configure(padx = 5, pady = (6, 3))
 
 
 
@@ -231,6 +209,7 @@ class QuizGui(tk.Tk):
 
     def print_sidebar(self, quiz):
         """"""
+        pass
 
     def add_sidebar(self, quiz):
         """add an indicated question to the screen sidebar"""
@@ -274,10 +253,6 @@ if __name__ == "__main__":
 
 
 # TODO
-
-# Clean QuizGui.__init__
-    # add self. to proper variables
-
 
 # EDIT QuizGui.add_sidebar to use self.quiz
 
