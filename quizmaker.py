@@ -155,10 +155,6 @@ class QuizGui(tk.Tk):
         self.scroll_list = tk.Listbox(self.sidebar, yscrollcommand=self.side_scroll.set, height = 25, width = 50)
         self.sidebar_list = []
 
-        # for line in range(1, 10):
-        #     sidebar_q = str(line)+ ". Question limited to 20".strip()[:20]+"..."+"     MC"
-        #     self.scroll_list.insert(tk.END, sidebar_q)
-
         self.scroll_list.pack(side="left", pady = (10,0))
         self.side_scroll.config(command = self.scroll_list.yview)
 
@@ -207,18 +203,53 @@ class QuizGui(tk.Tk):
         """change the answer window on the screen according to the response type"""
         pass
 
-    def print_sidebar(self, quiz):
+    def print_sidebar(self):
         """"""
-        pass
+        for line in range(1, 20):
+             q_num = str(line) + ". "
+             if len(q_num) == 3:
+                 q_num += "  "
+             q_val = "Question contents here, a very verbose question with lots to chop"
+             q_type = "WR"
 
-    def add_sidebar(self, quiz):
+             sidebar_q = q_num + q_val[:40] + "...     " + q_type
+
+             self.scroll_list.insert(tk.END, sidebar_q)
+
+    def add_sidebar(self):
         """add an indicated question to the screen sidebar"""
-        current_question = quiz.current_q
-        new_question = quiz.q_list[current_question].q_text
+        index = 1 
+        for q in self.quiz.q_list:
+            q_num = str(index) + ". "
+            if len(q_num) == 3:
+                q_num += " "
+            
+            if len(q.q_text) > 39:
+                q_val = q.q_text[:40] + "..." + (" " * 10)
+            else:
+                shortlen = len(q.q_text)
+                shortlen = 68 - shortlen
+                spacer = " " * shortlen
+                q_val = q.q_text + spacer
+              
+            
+            q_type = q.type
 
-        sidebar_string = str(current_question) + new_question[:30] + "     " + quiz.q_list[current_question].type
-        self.sidebar_list.insert(current_question, sidebar_string)
-        self.scroll_list.insert(tk.END, self.sidebar_list[0])
+            sidebar_q = q_num + "[" + q_type + "]  " + q_val
+
+            self.scroll_list.insert(tk.END, sidebar_q)
+            index += 1
+
+
+        # q_num = str("1") + ". "
+        # if len(q_num) == 3:
+        #     q_num += "  "
+        # q_val = "Question contents here, a very verbose question with lots to chop"
+        # q_type = "WR"
+
+        # sidebar_q = q_num + q_val[:40] + "...     " + q_type
+        # self.scroll_list.insert(tk.END, sidebar_q)
+    
 
     def rem_sidebar(self, question):
         """remove an indicated question from the screen sidebar"""
@@ -239,14 +270,16 @@ def filler_command():
 if __name__ == "__main__":
     quizzer = QuizGui()
 
-    my_question = Question("What is my birthday?")
+    q1 = Question(text = "What is the first question?", type = "MC")
+    q2 = Question(text = "What is a true false question?", type = "WR")
+    q3 = Question(text = "Who was there when you saw it happen besides Kyle?", type="CA")
+    q4 = Question(text = "I am hot", type = "TF")
+    q5 = Question(text = "when is my birthday?", type="MC")
 
-    my_quiz = Quiz()
-    my_quiz.q_list.append(my_question)
-    my_quiz.current_q = 0
+    quizzer.quiz.q_list = [q1, q2, q3, q4, q5]
+    quizzer.quiz.length = 5
 
-    quizzer.add_sidebar(my_quiz)
-
+    quizzer.add_sidebar()
 
     quizzer.mainloop()
 
