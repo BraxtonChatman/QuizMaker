@@ -29,7 +29,7 @@ class Quiz():
     def del_question(self, index):
         """Delete the current question"""
         if self.length > 1:
-            self.q_list.pop(index)
+            self.q_list.pop(index - 1)
             self.length -= 1
             return True
         else:
@@ -193,63 +193,37 @@ class QuizGui(tk.Tk):
             widget.configure(borderwidth = 3)
             widget.grid_configure(padx = 5, pady = (6, 3))
 
-
-
     def print_question(self):
         """Display the currently selected Question in the GUI question and answer frames"""
         pass
 
-    def change_answer_window(self, answer_type):
-        """change the answer window on the screen according to the response type"""
-        pass
-
     def print_sidebar(self):
-        """"""
-        for line in range(1, 20):
-             q_num = str(line) + ". "
-             if len(q_num) == 3:
-                 q_num += "  "
-             q_val = "Question contents here, a very verbose question with lots to chop"
-             q_type = "WR"
-
-             sidebar_q = q_num + q_val[:40] + "...     " + q_type
-
-             self.scroll_list.insert(tk.END, sidebar_q)
-
-    def add_sidebar(self):
-        """add an indicated question to the screen sidebar"""
-        index = 1 
+        """Iterates through quiz.q_list and formats question data on screen sidebar"""
+        index = 0
         for q in self.quiz.q_list:
+            # question number
+            index += 1
             q_num = str(index) + ". "
             if len(q_num) == 3:
                 q_num += " "
-            
+
+            # question text 
             if len(q.q_text) > 39:
                 q_val = q.q_text[:40] + "..." + (" " * 10)
             else:
-                shortlen = len(q.q_text)
-                shortlen = 68 - shortlen
-                spacer = " " * shortlen
-                q_val = q.q_text + spacer
+                q_val = q.q_text
               
+            # question type 
+            q_type = "[" + q.type + "] "
             
-            q_type = q.type
-
-            sidebar_q = q_num + "[" + q_type + "]  " + q_val
-
+            # question details formated string for sidebar
+            sidebar_q = q_num + q_type + q_val
             self.scroll_list.insert(tk.END, sidebar_q)
-            index += 1
 
-
-        # q_num = str("1") + ". "
-        # if len(q_num) == 3:
-        #     q_num += "  "
-        # q_val = "Question contents here, a very verbose question with lots to chop"
-        # q_type = "WR"
-
-        # sidebar_q = q_num + q_val[:40] + "...     " + q_type
-        # self.scroll_list.insert(tk.END, sidebar_q)
-    
+    def refresh_sidebar(self):
+        """Updates the sidebar by clearing and reinserting questions from the list"""
+        self.scroll_list.delete(0, tk.END)
+        self.print_sidebar()
 
     def rem_sidebar(self, question):
         """remove an indicated question from the screen sidebar"""
@@ -273,13 +247,15 @@ if __name__ == "__main__":
     q1 = Question(text = "What is the first question?", type = "MC")
     q2 = Question(text = "What is a true false question?", type = "WR")
     q3 = Question(text = "Who was there when you saw it happen besides Kyle?", type="CA")
-    q4 = Question(text = "I am hot", type = "TF")
+    q4 = Question(text = "I am hot", type = "T/F")
     q5 = Question(text = "when is my birthday?", type="MC")
 
     quizzer.quiz.q_list = [q1, q2, q3, q4, q5]
     quizzer.quiz.length = 5
 
-    quizzer.add_sidebar()
+    quizzer.print_sidebar()
+    quizzer.quiz.del_question(5)
+    quizzer.refresh_sidebar()
 
     quizzer.mainloop()
 
@@ -287,10 +263,8 @@ if __name__ == "__main__":
 
 # TODO
 
-# EDIT QuizGui.add_sidebar to use self.quiz
-
-# QuizGui clear and reisnsert for update sidebar
-
 # QuizGui.print_question
     # called whenever Quiz.add, .next, .prev, .goto_q
     # updates answer and question frames
+
+# quiz.del_question index value
