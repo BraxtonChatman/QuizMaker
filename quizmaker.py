@@ -61,11 +61,23 @@ class Question():
     have set answers (all but written response), options is a list of strings representing the available
     options to answer."""
 
-    def __init__(self, text = "", type = "", response = "", resp_list = []):
+    def __init__(self, type = "", text = ""):
         self.type = type
         self.q_text = text
-        self.answer = response
-        self.options = resp_list
+
+        # multiple choice correct answer indicator and answer options
+        self.mc_ans = 0
+        self.mc_optn = ["", "", "", ""]
+
+        # check all correct answer indicator and answer options
+        self.ca_ans = [False, False, False, False]
+        self.ca_optn = ["", "", "", ""]
+
+        # True/False correct answer
+        self.tf_ans = None
+
+        # Written Response correct answer
+        self.wr_ans = ""
 
     def add_option(self):
         """Add an option to the options list"""
@@ -191,7 +203,7 @@ class QuizGui(tk.Tk):
         # multiple choice answer space
         self.mc_var = tk.StringVar()
         self.mc_entries = [tk.Entry(self.current_answer, width = 70) for i in range(5)]
-        self.mc_buttons = [ttk.Radiobutton(self.current_answer, text="", value="ABCD"[i], variable=self.mc_var) for i in range(4)]
+        self.mc_buttons = [ttk.Radiobutton(self.current_answer, text="", value="1234"[i], variable=self.mc_var) for i in range(4)]
 
         # check all that apply answer space
         self.ca_vars = [tk.BooleanVar() for i in range(4)]
@@ -241,25 +253,32 @@ class QuizGui(tk.Tk):
             child.grid_forget()
 
         # question answer
-        if current_question.type == "WR":
-            self.answer_text.grid(row = 2, column = 0, columnspan=3)
-            current_answer = current_question.answer
-            self.answer_text.delete("1.0", tk.END)
-            self.answer_text.insert(tk.END, current_answer)
-
-        elif current_question.type == "T/F":
-            self.true_button.grid(row = 2, column = 0, padx = 40, pady = (30, 15))
-            self.false_button.grid(row = 3, column = 0, padx = 40, pady = 10)
-
-        elif current_question.type == "MC":
+        if current_question.type == "MC":
             for i in range(4):
                 self.mc_buttons[i].grid(row = i+2, column=0, pady = 5)
                 self.mc_entries[i].grid(row = i+2, column=1, columnspan = 2, pady = 5)
+
+                self.mc_entries[i].delete(0, tk.END)
+                self.mc_entries[i].insert(tk.END, current_question.mc_optn[i])
+
+                if i == current_question.mc_ans - 1:
+                    self.mc_var.set(str(i + 1))
 
         elif current_question.type == "CA":
             for i in range(4):
                 self.ca_buttons[i].grid(row = i + 2, column = 0, pady = 5)
                 self.ca_entries[i].grid(row = i + 2, column = 1, columnspan=2)
+
+        elif current_question.type == "T/F":
+            self.true_button.grid(row = 2, column = 0, padx = 40, pady = (30, 15))
+            self.false_button.grid(row = 3, column = 0, padx = 40, pady = 10)
+
+        elif current_question.type == "WR":
+            self.answer_text.grid(row = 2, column = 0, columnspan=3)
+            # current_answer = current_question.answer
+            # self.answer_text.delete("1.0", tk.END)
+            # self.answer_text.insert(tk.END, current_answer)
+
 
     def refresh_question(self):
         """updates the question and answer frames based on question response type being changed"""
@@ -316,11 +335,28 @@ class QuizGui(tk.Tk):
 if __name__ == "__main__":
     quizzer = QuizGui()
 
-    q1 = Question(text = "What is the first question?", type = "MC", response = "this one")
-    q2 = Question(text = "What is a true false question?", type = "WR", response = "not this one")
-    q3 = Question(text = "Who was there when you saw it happen besides Kyle?", type="CA", response="nobody else was there")
+    #### Test Questions #######################################################################################
+    q1 = Question(text = "What is the first question?", type = "MC") #, response = "this one")
+    q1.mc_optn = ["The next one", "this one", "the previous one", "none"]
+    q1.mc_ans = 2
+    
+    q2 = Question(text = "What is a true false question?", type = "WR") #, response = "not this one")
+    
+    
+    q3 = Question(text = "Who was there when you saw it happen besides Kyle?", type="CA") #, response="nobody else was there")
+    q3.ca_optn = ["Maddie", "Luke", "Davie", "Allen"]
+    q3.ca_ans = [True, False, True, True]
+    
     q4 = Question(text = "I am hot", type = "T/F")
+    q4.tf_ans = True
+    
+
     q5 = Question(text = "when is my birthday?", type="MC")
+    q5.mc_optn = ["June 18", "June 12", "June 0", "June 100"]
+    q5.mc_ans = 1
+
+
+
 
     quizzer.quiz.q_list = [q1, q2, q3, q4, q5]
     quizzer.quiz.length = 5
@@ -330,7 +366,7 @@ if __name__ == "__main__":
     quizzer.refresh_sidebar()
 
 
-    quizzer.quiz.current_q = 3
+    quizzer.quiz.current_q = 0
     quizzer.print_question()
 
 
@@ -339,6 +375,12 @@ if __name__ == "__main__":
 
 
 # TODO
+
+# work on printing different ressponse types in answer frame (CA, TF, WR)
+
+# removed answer value from Question class. Make sure to remove requirement for answer from print_question WR type
+
+
 
 # QuizGui.print_question
     # called whenever Quiz.add, .next, .prev, .goto_q
