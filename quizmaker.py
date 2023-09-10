@@ -102,7 +102,7 @@ class QuizGui(tk.Tk):
         self.window = tk.Frame(self)
         self.sidebar = tk.LabelFrame(self.window, text = "Question List", font = "bold")
         self.current_question = tk.LabelFrame(self.window, text = "Current Question", font = "bold")
-        self.current_answer = tk.LabelFrame(self.window, text = "Answer", font = "bold")
+        self.current_answer = tk.LabelFrame(self.window, text = "Answer", font = "bold", width = 490, height = 220)
         self.options = tk.LabelFrame(self.window, text = "Options", font = "bold")
 
         self.window.pack()
@@ -110,6 +110,8 @@ class QuizGui(tk.Tk):
         self.current_question.pack(pady = 10)
         self.current_answer.pack(pady = 10)
         self.options.pack(expand=True, fill = tk.X, pady = 10, ipady = 5)
+
+        self.current_answer.grid_propagate(0)
 
         # Generate menu and content of labelframes in window
         self.make_menu()
@@ -132,13 +134,13 @@ class QuizGui(tk.Tk):
         self.main_menu.add_cascade(label = "Quiz", menu = quiz_menu)
 
         # File tab suboptions
-        file_menu.add_command(label = "New Quiz", command= filler_command)
+        file_menu.add_command(label = "New Quiz", command= None)
         file_menu.add_command(label = "Open Quiz")
         file_menu.add_command(label = "Save Quiz")
         file_menu.add_command(label = "Save As")
 
         # Edit tab suboptions
-        edit_menu.add_command(label = "Change Question Order", command=filler_command)
+        edit_menu.add_command(label = "Change Question Order", command=None)
         edit_menu.add_command(label = "Add Question")
         edit_menu.add_command(label = "Delete Question")
         edit_menu.add_command(label = "Change Quiz Title")
@@ -160,18 +162,45 @@ class QuizGui(tk.Tk):
 
     def make_qframe(self):
         """Fill question frame"""
-        question_text = tk.Text(self.current_question, height = 6, width = 60)
-        question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
+        self.question_text = tk.Text(self.current_question, height = 6, width = 60)
+        self.question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
 
     def make_aframe(self):
         """Fill answer frame"""
-        answer_text = tk.Text(self.current_answer, height = 6, width = 60)
-        response_type_label = tk.Label(self.current_answer, text = "Response Type")
-        response_type = ttk.Combobox(self.current_answer, values = ["Multiple Choice", "Check All", "True or False", "Written Response"], state = "readonly")
 
-        response_type_label.grid(row = 1, column = 1, pady = 5, sticky="e")
-        response_type.grid(row = 1, column = 2, pady = 5)
-        answer_text.grid(row =2, column = 0, columnspan=3)
+        # response type dictionary
+        self.resp_dict = {"MC":"Multiple Choice", "CA":"Check All", "T/F":"True or False", "WR":"Written Response",
+                          "Multiple Choice":"MC", "Check All":"CA", "True or False":"T/F", "Written Response":"WR"}
+
+        # response type combobox
+        self.response_type_label = tk.Label(self.current_answer, text = "Response Type: ")
+        self.response_type_values = ["Multiple Choice", "Check All", "True or False", "Written Response"]
+        self.response_type_var = tk.StringVar()
+        self.response_type_var.set("Written Response")
+        self.response_type = ttk.Combobox(self.current_answer, values = self.response_type_values, state = "readonly", textvariable=self.response_type_var)
+        self.response_type.bind("<<ComboboxSelected>>", lambda x: self.refresh_question())
+
+        # written response answer space
+        self.answer_text = tk.Text(self.current_answer, height = 9, width = 60)
+
+        # true or false answer space
+        self.tf_var = tk.StringVar()
+        self.true_button = ttk.Radiobutton(self.current_answer, text = " True", value = "True", variable = self.tf_var)
+        self.false_button = ttk.Radiobutton(self.current_answer, text = " False", value = "False", variable = self.tf_var)
+
+        # multiple choice answer space
+        self.mc_var = tk.StringVar()
+        self.mc_entries = [tk.Entry(self.current_answer, width = 70) for i in range(5)]
+        self.mc_buttons = [ttk.Radiobutton(self.current_answer, text="", value="ABCD"[i], variable=self.mc_var) for i in range(4)]
+
+        # check all that apply answer space
+        self.ca_vars = [tk.BooleanVar() for i in range(4)]
+        self.ca_entries = [tk.Entry(self.current_answer, width = 70) for i in range(4)]
+        self.ca_buttons = [tk.Checkbutton(self.current_answer, text = "", variable = self.ca_vars[i], onvalue=True, offvalue=False) for i in range(4)]
+
+        # geo manage
+        self.response_type_label.grid(row = 1, column = 1, pady = 5, padx = (90, 5))
+        self.response_type.grid(row = 1, column = 2, pady = 5)
 
     def make_oframe(self):
         """Fill options frame"""
@@ -193,9 +222,55 @@ class QuizGui(tk.Tk):
             widget.configure(borderwidth = 3)
             widget.grid_configure(padx = 5, pady = (6, 3))
 
+
     def print_question(self):
         """Display the currently selected Question in the GUI question and answer frames"""
-        pass
+        current_question = self.quiz.q_list[self.quiz.current_q]
+
+        # question text 
+        self.question_text.delete("1.0", tk.END)
+        self.question_text.insert(tk.END, current_question.q_text)
+
+        # question response type
+        current_type = self.resp_dict[current_question.type]
+        self.response_type_var.set(current_type)
+
+        # clear previous response widget
+        wlist = self.current_answer.winfo_children()
+        for child in wlist[2:]:
+            child.grid_forget()
+
+        # question answer
+        if current_question.type == "WR":
+            self.answer_text.grid(row = 2, column = 0, columnspan=3)
+            current_answer = current_question.answer
+            self.answer_text.delete("1.0", tk.END)
+            self.answer_text.insert(tk.END, current_answer)
+
+        elif current_question.type == "T/F":
+            self.true_button.grid(row = 2, column = 0, padx = 40, pady = (30, 15))
+            self.false_button.grid(row = 3, column = 0, padx = 40, pady = 10)
+
+        elif current_question.type == "MC":
+            for i in range(4):
+                self.mc_buttons[i].grid(row = i+2, column=0, pady = 5)
+                self.mc_entries[i].grid(row = i+2, column=1, columnspan = 2, pady = 5)
+
+        elif current_question.type == "CA":
+            for i in range(4):
+                self.ca_buttons[i].grid(row = i + 2, column = 0, pady = 5)
+                self.ca_entries[i].grid(row = i + 2, column = 1, columnspan=2)
+
+    def refresh_question(self):
+        """updates the question and answer frames based on question response type being changed"""
+
+        # change current question type to selected combobox option type
+        new_type = self.response_type_var.get()
+        current_question = self.quiz.q_list[self.quiz.current_q]
+        current_question.type = self.resp_dict[new_type]
+        
+        # print question with new type
+        self.print_question()
 
     def print_sidebar(self):
         """Iterates through quiz.q_list and formats question data on screen sidebar"""
@@ -225,6 +300,7 @@ class QuizGui(tk.Tk):
         self.scroll_list.delete(0, tk.END)
         self.print_sidebar()
 
+
     def rem_sidebar(self, question):
         """remove an indicated question from the screen sidebar"""
         pass
@@ -237,16 +313,12 @@ class QuizGui(tk.Tk):
             self.title("Quiz Maker: Untitled")
 
 
-def filler_command():
-    pass
-
-
 if __name__ == "__main__":
     quizzer = QuizGui()
 
-    q1 = Question(text = "What is the first question?", type = "MC")
-    q2 = Question(text = "What is a true false question?", type = "WR")
-    q3 = Question(text = "Who was there when you saw it happen besides Kyle?", type="CA")
+    q1 = Question(text = "What is the first question?", type = "MC", response = "this one")
+    q2 = Question(text = "What is a true false question?", type = "WR", response = "not this one")
+    q3 = Question(text = "Who was there when you saw it happen besides Kyle?", type="CA", response="nobody else was there")
     q4 = Question(text = "I am hot", type = "T/F")
     q5 = Question(text = "when is my birthday?", type="MC")
 
@@ -254,8 +326,13 @@ if __name__ == "__main__":
     quizzer.quiz.length = 5
 
     quizzer.print_sidebar()
-    quizzer.quiz.del_question(5)
+    #quizzer.quiz.del_question(5)
     quizzer.refresh_sidebar()
+
+
+    quizzer.quiz.current_q = 3
+    quizzer.print_question()
+
 
     quizzer.mainloop()
 
@@ -266,5 +343,7 @@ if __name__ == "__main__":
 # QuizGui.print_question
     # called whenever Quiz.add, .next, .prev, .goto_q
     # updates answer and question frames
+
+# adjust q_frame and a_frame font and box size
 
 # quiz.del_question index value
