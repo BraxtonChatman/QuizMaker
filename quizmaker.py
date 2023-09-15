@@ -74,7 +74,7 @@ class Question():
         self.ca_optn = ["", "", "", ""]
 
         # True/False correct answer
-        self.tf_ans = None
+        self.tf_ans = True
 
         # Written Response correct answer
         self.wr_ans = ""
@@ -165,12 +165,14 @@ class QuizGui(tk.Tk):
     def make_sframe(self):
         """Fill sidebar frame"""
         self.side_scroll = tk.Scrollbar(self.sidebar)
-        self.side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
         self.scroll_list = tk.Listbox(self.sidebar, yscrollcommand=self.side_scroll.set, height = 25, width = 50)
         self.sidebar_list = []
 
+        self.side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
         self.scroll_list.pack(side="left", pady = (10,0))
+
         self.side_scroll.config(command = self.scroll_list.yview)
+        self.scroll_list.bind("<Double-Button-1>", lambda x: self.switch_s())
 
     def make_qframe(self):
         """Fill question frame"""
@@ -196,9 +198,9 @@ class QuizGui(tk.Tk):
         self.answer_text = tk.Text(self.current_answer, height = 9, width = 60)
 
         # true or false answer space
-        self.tf_var = tk.StringVar()
-        self.true_button = ttk.Radiobutton(self.current_answer, text = " True", value = "True", variable = self.tf_var)
-        self.false_button = ttk.Radiobutton(self.current_answer, text = " False", value = "False", variable = self.tf_var)
+        self.tf_var = tk.BooleanVar()
+        self.true_button = ttk.Radiobutton(self.current_answer, text = " True", value = True, variable = self.tf_var)
+        self.false_button = ttk.Radiobutton(self.current_answer, text = " False", value = False, variable = self.tf_var)
 
         # multiple choice answer space
         self.mc_var = tk.StringVar()
@@ -218,8 +220,8 @@ class QuizGui(tk.Tk):
         """Fill options frame"""
         self.add_question_button = tk.Button(self.options, text = "Add Question")
         self.del_question_button = tk.Button(self.options, text = "Delete Question")
-        self.prev_button = tk.Button(self.options, text = "Previous", width = 7)
-        self.next_button = tk.Button(self.options, text = "Next", width = 7)
+        self.prev_button = tk.Button(self.options, text = "Previous", width = 7, command = lambda: self.switch_q(-2))
+        self.next_button = tk.Button(self.options, text = "Next", width = 7, command = lambda: self.switch_q(-1))
         self.save_button = tk.Button(self.options, text = "Save", width = 7)
         self.fin_button = tk.Button(self.options, text = "Finish", width = 7)
 
@@ -252,7 +254,7 @@ class QuizGui(tk.Tk):
         for child in wlist[2:]:
             child.grid_forget()
 
-        # question answer
+        # question answer formatted for multiple choice, single selection
         if current_question.type == "MC":
             for i in range(4):
                 self.mc_buttons[i].grid(row = i+2, column=0, pady = 5)
@@ -264,20 +266,32 @@ class QuizGui(tk.Tk):
                 if i == current_question.mc_ans - 1:
                     self.mc_var.set(str(i + 1))
 
+        # formatted for check all answer
         elif current_question.type == "CA":
             for i in range(4):
                 self.ca_buttons[i].grid(row = i + 2, column = 0, pady = 5)
                 self.ca_entries[i].grid(row = i + 2, column = 1, columnspan=2)
 
+                self.ca_entries[i].delete(0, tk.END)
+                self.ca_entries[i].insert(tk.END, current_question.ca_optn[i])
+
+                if current_question.ca_ans[i]:
+                    self.ca_vars[i].set(True)
+
+        # formatted for true/false answer
         elif current_question.type == "T/F":
             self.true_button.grid(row = 2, column = 0, padx = 40, pady = (30, 15))
             self.false_button.grid(row = 3, column = 0, padx = 40, pady = 10)
 
+            self.tf_var.set(current_question.tf_ans)
+
+        # formatted for written response
         elif current_question.type == "WR":
             self.answer_text.grid(row = 2, column = 0, columnspan=3)
-            # current_answer = current_question.answer
-            # self.answer_text.delete("1.0", tk.END)
-            # self.answer_text.insert(tk.END, current_answer)
+
+            current_answer = current_question.wr_ans
+            self.answer_text.delete("1.0", tk.END)
+            self.answer_text.insert(tk.END, current_answer)
 
 
     def refresh_question(self):
@@ -332,6 +346,33 @@ class QuizGui(tk.Tk):
             self.title("Quiz Maker: Untitled")
 
 
+    def switch_q(self, direction):
+        """Command for 'next' and 'prev' buttons as well as for sidebar switching
+        which shifts focus to next, previous, or selected question in quiz list
+        and prints it. Direction is numeric index with -1 representing next, -2
+        representing previous, and other values representing index for question
+        in Quiz.q_list"""
+        if direction == -1:
+            self.quiz.next_q()
+            self.print_question()
+        
+        elif direction == -2:
+            self.quiz.prev_q()
+            self.print_question()
+
+        else:
+            self.quiz.goto_q(direction)
+            self.print_question()
+   
+    def switch_s(self):
+        """Bind function for double click on item in sidebar listbox.
+        Switches question focus to double clicked item"""
+        selection = self.scroll_list.curselection()
+        if selection:
+            self.switch_q(selection[0])
+            self.print_question()
+
+
 if __name__ == "__main__":
     quizzer = QuizGui()
 
@@ -341,6 +382,7 @@ if __name__ == "__main__":
     q1.mc_ans = 2
     
     q2 = Question(text = "What is a true false question?", type = "WR") #, response = "not this one")
+    q2.wr_ans = "A true/false question is one that has a binary option being either True, or False."
     
     
     q3 = Question(text = "Who was there when you saw it happen besides Kyle?", type="CA") #, response="nobody else was there")
@@ -348,13 +390,14 @@ if __name__ == "__main__":
     q3.ca_ans = [True, False, True, True]
     
     q4 = Question(text = "I am hot", type = "T/F")
-    q4.tf_ans = True
+    q4.tf_ans = False
     
 
     q5 = Question(text = "when is my birthday?", type="MC")
     q5.mc_optn = ["June 18", "June 12", "June 0", "June 100"]
     q5.mc_ans = 1
 
+    ##############################################################################################
 
 
 
@@ -366,8 +409,10 @@ if __name__ == "__main__":
     quizzer.refresh_sidebar()
 
 
-    quizzer.quiz.current_q = 0
+    quizzer.quiz.current_q = 1
     quizzer.print_question()
+
+
 
 
     quizzer.mainloop()
@@ -376,15 +421,8 @@ if __name__ == "__main__":
 
 # TODO
 
-# work on printing different ressponse types in answer frame (CA, TF, WR)
+# updated next and prev button to change listbox curselection
 
-# removed answer value from Question class. Make sure to remove requirement for answer from print_question WR type
-
-
-
-# QuizGui.print_question
-    # called whenever Quiz.add, .next, .prev, .goto_q
-    # updates answer and question frames
 
 # adjust q_frame and a_frame font and box size
 
