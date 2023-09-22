@@ -166,7 +166,6 @@ class QuizGui(tk.Tk):
         """Fill sidebar frame"""
         self.side_scroll = tk.Scrollbar(self.sidebar)
         self.scroll_list = tk.Listbox(self.sidebar, yscrollcommand=self.side_scroll.set, height = 25, width = 50)
-        self.sidebar_list = []
 
         self.side_scroll.pack(side="right", fill = tk.Y, pady = (10, 0))
         self.scroll_list.pack(side="left", pady = (10,0))
@@ -354,15 +353,18 @@ class QuizGui(tk.Tk):
         in Quiz.q_list"""
         if direction == -1:
             self.quiz.next_q()
-            self.print_question()
         
         elif direction == -2:
             self.quiz.prev_q()
-            self.print_question()
 
         else:
             self.quiz.goto_q(direction)
-            self.print_question()
+
+        self.print_question()
+        self.scroll_list.select_clear(0, tk.END)
+        self.scroll_list.select_set(self.quiz.current_q)
+        self.scroll_list.activate(self.quiz.current_q)
+
    
     def switch_s(self):
         """Bind function for double click on item in sidebar listbox.
@@ -371,6 +373,9 @@ class QuizGui(tk.Tk):
         if selection:
             self.switch_q(selection[0])
             self.print_question()
+
+
+            
 
 
 if __name__ == "__main__":
@@ -421,7 +426,8 @@ if __name__ == "__main__":
 
 # TODO
 
-# updated next and prev button to change listbox curselection
+# add functionality to traverse sidebar with keys and press enter to change question
+# and delete to delete question
 
 
 # adjust q_frame and a_frame font and box size
