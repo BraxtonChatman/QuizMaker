@@ -199,6 +199,9 @@ class QuizGui(tk.Tk):
         self.question_text = tk.Text(self.current_question, height = 6, width = 60)
         self.question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
 
+        # TODO
+        self.question_text.bind("<FocusOut>", lambda event: self.refresh_question())
+
     def make_aframe(self):
         """Fill answer frame"""
 
@@ -212,7 +215,7 @@ class QuizGui(tk.Tk):
         self.response_type_var = tk.StringVar()
         self.response_type_var.set("Written Response")
         self.response_type = ttk.Combobox(self.current_answer, values = self.response_type_values, state = "readonly", textvariable=self.response_type_var)
-        self.response_type.bind("<<ComboboxSelected>>", lambda x: self.refresh_question())
+        self.response_type.bind("<<ComboboxSelected>>", lambda event: self.refresh_question())
 
 
         # written response answer space
@@ -314,12 +317,17 @@ class QuizGui(tk.Tk):
             self.answer_text.insert(tk.END, current_answer)
 
     def refresh_question(self):
-        """updates the question and answer frames based on question response type being changed"""
+        """updates the question and answer frames based on question response type being changed
+        and or when question text is edited"""
 
         # change current question type to selected combobox option type
         new_type = self.response_type_var.get()
         current_question = self.quiz.q_list[self.quiz.current_q]
         current_question.change_type(self.resp_dict[new_type])
+
+        # update Question text based on question_text input
+        new_text = self.question_text.get("1.0", tk.END)
+        current_question.q_text = new_text
 
         # print question with new type
         self.print_question()
@@ -374,9 +382,17 @@ class QuizGui(tk.Tk):
 
             # question text 
             if len(q.q_text) > 39:
-                q_val = q.q_text[:40] + "..." + (" " * 10)
+                if "\n" in q.q_text[:40]:
+                    n_index = q.q_text[:40].find("\n")
+                    q_val = q.q_text[:n_index] + "..." + (" " * 10)
+                else:
+                    q_val = q.q_text[:40] + "..." + (" " * 10)
             else:
-                q_val = q.q_text
+                if "\n" in q.q_text:
+                    n_index = q.q_text.find("\n")
+                    q_val = q.q_text[:n_index] + "..."
+                else:
+                    q_val = q.q_text
               
             # question type 
             q_type = "[" + q.type + "] "
