@@ -28,10 +28,13 @@ class Question():
         # Written Response correct answer
         self.wr_ans = ""
 
-    # TODO 
     def change_type(self, qtype):
         """Change self.type to qtype based on desired question response type"""
         self.type = qtype
+
+    def change_question(self, text):
+        """Changes value of q_text to text"""
+        self.q_text = text
 
     def set_correct(self):
         """Set which of the options in the options list are correct"""
@@ -217,7 +220,6 @@ class QuizGui(tk.Tk):
         self.response_type = ttk.Combobox(self.current_answer, values = self.response_type_values, state = "readonly", textvariable=self.response_type_var)
         self.response_type.bind("<<ComboboxSelected>>", lambda event: self.refresh_question())
 
-
         # written response answer space
         self.answer_text = tk.Text(self.current_answer, height = 9, width = 60)
 
@@ -235,6 +237,10 @@ class QuizGui(tk.Tk):
         self.ca_vars = [tk.BooleanVar() for i in range(4)]
         self.ca_entries = [tk.Entry(self.current_answer, width = 70) for i in range(4)]
         self.ca_buttons = [tk.Checkbutton(self.current_answer, text = "", variable = self.ca_vars[i], onvalue=True, offvalue=False) for i in range(4)]
+
+        # update Question answer values when focus leaves answer widgets
+        for widget in self.current_answer.winfo_children():
+            widget.bind("<FocusOut>", lambda event: self.refresh_question())
 
         # geo manage
         self.response_type_label.grid(row = 1, column = 1, pady = 5, padx = (90, 5))
@@ -318,16 +324,36 @@ class QuizGui(tk.Tk):
 
     def refresh_question(self):
         """updates the question and answer frames based on question response type being changed
-        and or when question text is edited"""
+        and or when question text is edited and updates Question based on changes"""
 
         # change current question type to selected combobox option type
-        new_type = self.response_type_var.get()
+        new_type = self.resp_dict[self.response_type_var.get()]
         current_question = self.quiz.q_list[self.quiz.current_q]
-        current_question.change_type(self.resp_dict[new_type])
+        current_question.change_type(new_type)
 
         # update Question text based on question_text input
         new_text = self.question_text.get("1.0", tk.END)
-        current_question.q_text = new_text
+        current_question.change_question(new_text)
+
+        # update Question answer values when answer frame values are changed
+        if new_type == "MC":
+            for i in range(4):
+                current_question.mc_optn[i] = self.mc_entries[i].get()
+                if int(self.mc_var.get()) == i + 1:
+                    current_question.mc_ans = i - 1
+
+        elif new_type == "CA":
+            for i in range(4):
+                current_question.ca_ans[i] = self.ca_vars[i].get()
+                current_question.ca_optn[i] = self.ca_entries[i].get()
+
+        elif new_type == "T/F":
+            new_answer = self.tf_var.get()
+            current_question.tf_ans = new_answer
+
+        elif new_type == "WR":
+            new_answer = self.answer_text.get("1.0", tk.END)
+            current_question.wr_ans = new_answer
 
         # print question with new type
         self.print_question()
@@ -490,8 +516,6 @@ if __name__ == "__main__":
 
     ##############################################################################################
 
-
-
     quizzer.quiz.q_list = [q1, q2, q3, q4, q5]
     quizzer.quiz.length = 5
 
@@ -499,12 +523,8 @@ if __name__ == "__main__":
     #quizzer.quiz.del_question(5)
     #quizzer.refresh_sidebar()
 
-
     quizzer.quiz.current_q = 0
     quizzer.print_question()
-
-
-
 
     quizzer.mainloop()
 
