@@ -1,67 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
-
-
-class Quiz():
-    """Class representing the quiz. Contains list of Question objects as well as positional
-    data and functions to modify questions."""
-
-    def __init__(self):
-        self.title = ""
-        self.q_list = [Question()]
-        self.length = 1
-        self.current_q = 0
-
-    def change_title(self, new_title):
-        """Change quiz title"""
-        self.title = new_title
-
-    def goto_q(self, num):
-        """Change current question to the indicated question number, if valid"""
-        self.current_q = num
-
-    def add_question(self):
-        """Adds a question to q_list after index current_q"""
-        self.q_list.insert(self.current_q + 1, Question())
-        self.length += 1
-        return True
-
-    def del_question(self, index):
-        """Delete the current question"""
-        if self.length > 1:
-            self.q_list.pop(index - 1)
-            self.length -= 1
-            return True
-        else:
-            return False
-        
-    def next_q(self):
-        """Moves question focus to the next question in q_list if it exists"""
-        if self.current_q < self.length - 1:
-            self.current_q += 1
-        return self.current_q
-
-    def prev_q(self):
-        """Moves question focus to the previous question in q_list if it exists"""
-        if self.current_q > 0:
-            self.current_q -= 1
-        return self.current_q
-
-    def save_file(self):
-        pass
-
-    def read_file(self):
-        pass
+from tkinter import messagebox
 
 
 class Question():
     """Class representing a question on the quiz. type represents what kind of response
-    the question expects (Multiple choice, check all, true/false, or written), q_text represents
-    the question text as a string, answer represents the answer text as a string for questions that
-    have set answers (all but written response), options is a list of strings representing the available
-    options to answer."""
+    the question expects (Multiple choice, check all, true/false, or written in two letter abbreviation),
+    q_text represents the question text as a string, answer represents the answer text as a string for
+    questions that have set answers (all but written response), options is a list of strings representing
+    the available options to answer."""
 
-    def __init__(self, type = "", text = ""):
+    def __init__(self, type = "MC", text = ""):
         self.type = type
         self.q_text = text
 
@@ -79,6 +28,15 @@ class Question():
         # Written Response correct answer
         self.wr_ans = ""
 
+    # TODO 
+    def change_type(self, qtype):
+        """Change self.type to qtype based on desired question response type"""
+        self.type = qtype
+
+    def set_correct(self):
+        """Set which of the options in the options list are correct"""
+        pass
+    
     def add_option(self):
         """Add an option to the options list"""
         pass
@@ -88,12 +46,70 @@ class Question():
         if option_index in range(len(self.options)):
             self.options.pop(option_index)
 
-    def change_type(self, qtype):
-        """Change self.type to qtype based on desired question response type"""
-        self.type = qtype
 
-    def set_correct(self):
-        """Set which of the options in the options list are correct"""
+class Quiz():
+    """Class representing the quiz. Contains list of Question objects as well as positional
+    data and functions to modify questions."""
+
+    def __init__(self):
+        self.title = ""
+        self.q_list = [Question()]
+        self.length = 1
+        self.current_q = 0
+
+    def add_question(self):
+        """Adds a question to q_list after index current_q"""
+        self.q_list.insert(self.current_q + 1, Question())
+        self.current_q += 1
+        self.length += 1
+        return True
+
+    def del_question(self, index):
+        """Delete the current question"""
+        if self.length > 1:
+            self.q_list.pop(index)
+            self.length -= 1
+
+            if index <= self.current_q and self.current_q != 0:
+                self.current_q -= 1
+            return True
+        
+        else:
+            return False
+
+    def goto_q(self, num):
+        """Change current question to the indicated question number, if valid"""
+        self.current_q = num
+
+    def next_q(self):
+        """Moves question focus to the next question in q_list if it exists"""
+        if self.current_q < self.length - 1:
+            self.current_q += 1
+        return self.current_q
+
+    def prev_q(self):
+        """Moves question focus to the previous question in q_list if it exists"""
+        if self.current_q > 0:
+            self.current_q -= 1
+        return self.current_q
+
+
+    # TODO
+    def change_title(self, new_title):
+        """Change quiz title"""
+        self.title = new_title
+
+    def save_file(self, filename):
+        pass
+
+    def read_admin(self, filename):
+        """Reads data from csv file indicated by filename to present quiz
+        in admin(quiz creator) mode"""
+        pass
+
+    def read_user(self, filename):
+        """Reads data from csv file indicated by filename to present quiz
+        in user(quiz taker) mode"""
         pass
 
 
@@ -171,7 +187,12 @@ class QuizGui(tk.Tk):
         self.scroll_list.pack(side="left", pady = (10,0))
 
         self.side_scroll.config(command = self.scroll_list.yview)
-        self.scroll_list.bind("<Double-Button-1>", lambda x: self.switch_s())
+
+        # listbox bindings that allow traversal, selection, and deletion with keys
+        self.scroll_list.bind("<Double-Button-1>", lambda event: self.switch_s())
+        self.scroll_list.bind("<Return>", lambda event: self.switch_s())
+        self.scroll_list.bind("<Delete>", lambda event: self.delete_question(-2))
+        self.scroll_list.bind("<FocusOut>", lambda event: self.scroll_list.select_clear(0, tk.END))
 
     def make_qframe(self):
         """Fill question frame"""
@@ -192,6 +213,7 @@ class QuizGui(tk.Tk):
         self.response_type_var.set("Written Response")
         self.response_type = ttk.Combobox(self.current_answer, values = self.response_type_values, state = "readonly", textvariable=self.response_type_var)
         self.response_type.bind("<<ComboboxSelected>>", lambda x: self.refresh_question())
+
 
         # written response answer space
         self.answer_text = tk.Text(self.current_answer, height = 9, width = 60)
@@ -217,8 +239,8 @@ class QuizGui(tk.Tk):
 
     def make_oframe(self):
         """Fill options frame"""
-        self.add_question_button = tk.Button(self.options, text = "Add Question")
-        self.del_question_button = tk.Button(self.options, text = "Delete Question")
+        self.add_question_button = tk.Button(self.options, text = "Add Question", command = lambda: self.add_question())
+        self.del_question_button = tk.Button(self.options, text = "Delete Question", command = lambda: self.delete_question(-1))
         self.prev_button = tk.Button(self.options, text = "Previous", width = 7, command = lambda: self.switch_q(-2))
         self.next_button = tk.Button(self.options, text = "Next", width = 7, command = lambda: self.switch_q(-1))
         self.save_button = tk.Button(self.options, text = "Save", width = 7)
@@ -234,7 +256,6 @@ class QuizGui(tk.Tk):
         for widget in self.options.winfo_children():
             widget.configure(borderwidth = 3)
             widget.grid_configure(padx = 5, pady = (6, 3))
-
 
     def print_question(self):
         """Display the currently selected Question in the GUI question and answer frames"""
@@ -292,17 +313,54 @@ class QuizGui(tk.Tk):
             self.answer_text.delete("1.0", tk.END)
             self.answer_text.insert(tk.END, current_answer)
 
-
     def refresh_question(self):
         """updates the question and answer frames based on question response type being changed"""
 
         # change current question type to selected combobox option type
         new_type = self.response_type_var.get()
         current_question = self.quiz.q_list[self.quiz.current_q]
-        current_question.type = self.resp_dict[new_type]
-        
+        current_question.change_type(self.resp_dict[new_type])
+
         # print question with new type
         self.print_question()
+        self.refresh_sidebar()
+
+    def add_question(self):
+        """Inserts a new question into quiz list after the current one and
+        switches focus to it"""
+
+        self.quiz.add_question()
+        self.print_question()
+        self.refresh_sidebar()
+
+    def delete_question(self, index):
+        """Deletes the current question from list. Function is used as command
+        function for delete button as well as a function bind for delete key on
+        sidebar. input -1 as index to delete current question. input -2 as index
+        to delete currently selected item on sidebar"""
+
+        if index == -1:
+            index = self.quiz.current_q
+
+        if index == -2:
+            selection = self.scroll_list.curselection()[0]
+            index = selection
+            print(index)
+
+        # prompt user if they are sure they want to delete
+        message_string = "Are you sure you would like to delete this question?\n\n        There's no getting it back once you do."
+        del_text = self.quiz.q_list[index].q_text
+        del_title = "Delete Question {}: ".format(index + 1) + del_text
+        valid = messagebox.askyesnocancel(title=del_title, message=message_string)
+
+        if not valid:
+            return False
+            
+        self.quiz.del_question(index)
+        self.print_question()
+        self.refresh_sidebar()
+
+        return True
 
     def print_sidebar(self):
         """Iterates through quiz.q_list and formats question data on screen sidebar"""
@@ -326,25 +384,16 @@ class QuizGui(tk.Tk):
             # question details formated string for sidebar
             sidebar_q = q_num + q_type + q_val
             self.scroll_list.insert(tk.END, sidebar_q)
-
+     
     def refresh_sidebar(self):
         """Updates the sidebar by clearing and reinserting questions from the list"""
         self.scroll_list.delete(0, tk.END)
         self.print_sidebar()
 
-
-    def rem_sidebar(self, question):
-        """remove an indicated question from the screen sidebar"""
-        pass
-
-    def change_title(self):
-        """change window title based on current quiz title"""
-        if self.quiz.title:
-            self.title("Quiz Maker:" + self.quiz.title)
-        else:
-            self.title("Quiz Maker: Untitled")
-
-
+        self.scroll_list.select_clear(0, tk.END)
+        self.scroll_list.select_set(self.quiz.current_q)
+        self.scroll_list.activate(self.quiz.current_q)
+    
     def switch_q(self, direction):
         """Command for 'next' and 'prev' buttons as well as for sidebar switching
         which shifts focus to next, previous, or selected question in quiz list
@@ -360,12 +409,12 @@ class QuizGui(tk.Tk):
         else:
             self.quiz.goto_q(direction)
 
+        # print question and update sidebar highlight/active item
         self.print_question()
         self.scroll_list.select_clear(0, tk.END)
         self.scroll_list.select_set(self.quiz.current_q)
         self.scroll_list.activate(self.quiz.current_q)
 
-   
     def switch_s(self):
         """Bind function for double click on item in sidebar listbox.
         Switches question focus to double clicked item"""
@@ -374,6 +423,27 @@ class QuizGui(tk.Tk):
             self.switch_q(selection[0])
             self.print_question()
 
+    def save_admin(self, filename = ""):
+        """Command function for save button that saves quiz data to csv
+        file by calling quiz.save_file"""
+        self.quiz.save_file(filename)
+
+
+    # TODO
+    def read_admin(self, filename):
+        """QuizGui wrapper function to call quiz.read_admin"""
+        pass
+
+    def read_user(self, filename):
+        """QuizGui wrapper function to call quiz.read_user"""
+        pass
+
+    def change_title(self):
+        """change window title based on current quiz title"""
+        if self.quiz.title:
+            self.title("Quiz Maker:" + self.quiz.title)
+        else:
+            self.title("Quiz Maker: Untitled")
 
             
 
@@ -411,10 +481,10 @@ if __name__ == "__main__":
 
     quizzer.print_sidebar()
     #quizzer.quiz.del_question(5)
-    quizzer.refresh_sidebar()
+    #quizzer.refresh_sidebar()
 
 
-    quizzer.quiz.current_q = 1
+    quizzer.quiz.current_q = 0
     quizzer.print_question()
 
 
@@ -426,10 +496,14 @@ if __name__ == "__main__":
 
 # TODO
 
-# add functionality to traverse sidebar with keys and press enter to change question
-# and delete to delete question
+# add title
+# save data
 
+""" 1. Title
+    2. number of questions
+    3. question formatting
+        - type
+        - question text
+        - """
 
 # adjust q_frame and a_frame font and box size
-
-# quiz.del_question index value
