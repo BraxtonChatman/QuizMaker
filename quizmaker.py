@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter import filedialog
+import os
 
 
 class Question():
@@ -96,14 +98,23 @@ class Quiz():
             self.current_q -= 1
         return self.current_q
 
-
-    # TODO
     def change_title(self, new_title):
         """Change quiz title"""
         self.title = new_title
 
-    def save_file(self, filename):
-        pass
+
+    # TODO
+    def save_admin(self, filename):
+        """Saves Quiz data to csv file from admin(quiz creator) mode"""
+        with open(filename, "w") as f:
+            f.write(filename + "\n")
+            f.write(str(self.length) + "\n")
+
+##############################################################
+            for question in self.q_list:
+                f.write(question.mc_optn[0] + "\n")
+            
+
 
     def read_admin(self, filename):
         """Reads data from csv file indicated by filename to present quiz
@@ -151,6 +162,9 @@ class QuizGui(tk.Tk):
         self.make_aframe()
         self.make_oframe()
 
+        # file location variable for saving
+        self.file_location = ""
+
     def make_menu(self):
         """Creates the menu bar and options at the top of the screen"""
         self.main_menu = tk.Menu(self.window)
@@ -167,9 +181,9 @@ class QuizGui(tk.Tk):
         # File tab suboptions
         file_menu.add_command(label = "New Quiz", command= None)
         file_menu.add_command(label = "Open Quiz")
-        file_menu.add_command(label = "Save Quiz")
-        file_menu.add_command(label = "Save As")
-
+        file_menu.add_command(label = "Save", command=self.save)
+        file_menu.add_command(label = "Save As", command=lambda: self.save(save_as=True))
+        
         # Edit tab suboptions
         edit_menu.add_command(label = "Change Question Order", command=None)
         edit_menu.add_command(label = "Add Question")
@@ -180,6 +194,10 @@ class QuizGui(tk.Tk):
         quiz_menu.add_command(label = "Run Quiz")
         quiz_menu.add_command(label = "Stop Quiz")
         quiz_menu.add_command(label = "Question Weights")
+
+        # enable saving through hotkey Control+s and Control+Shift+S
+        self.bind("<Control-s>", self.save)
+        self.bind("<Control-Shift-S>", lambda event: self.save(save_as=True))
 
     def make_sframe(self):
         """Fill sidebar frame"""
@@ -252,7 +270,7 @@ class QuizGui(tk.Tk):
         self.del_question_button = tk.Button(self.options, text = "Delete Question", command = lambda: self.delete_question(-1))
         self.prev_button = tk.Button(self.options, text = "Previous", width = 7, command = lambda: self.switch_q(-2))
         self.next_button = tk.Button(self.options, text = "Next", width = 7, command = lambda: self.switch_q(-1))
-        self.save_button = tk.Button(self.options, text = "Save", width = 7)
+        self.save_button = tk.Button(self.options, text = "Save", width = 7, command = self.save)
         self.fin_button = tk.Button(self.options, text = "Finish", width = 7)
 
         self.prev_button.grid(row = 0, column = 0)
@@ -465,10 +483,32 @@ class QuizGui(tk.Tk):
             self.switch_q(selection[0])
             self.print_question()
 
-    def save_admin(self, filename = ""):
+    def save(self, save_as = False):
         """Command function for save button that saves quiz data to csv
         file by calling quiz.save_file"""
-        self.quiz.save_file(filename)
+
+        # input new name for save file if quiz has not been named yet or "save as" has been selected
+        cwd = os.getcwd()
+        if self.quiz.title == "" or save_as == True:
+            save_filename = filedialog.asksaveasfilename(defaultextension=".txt", initialdir=cwd, filetypes=(("Text File", "*.txt"),))
+            
+            # add a .txt extension if an alternative extension was input
+            if save_filename[-4:] != ".txt":
+                save_filename += ".txt"
+
+            self.file_location = save_filename
+
+            # use only the filename without path or extension for the quiz title
+            new_title = os.path.basename(save_filename)[:-4]
+            self.change_title(new_title)
+
+        # pass save file name to quiz.save_admin for file write
+        self.quiz.save_admin(self.file_location)
+
+    def change_title(self, new_title):
+        """change window title based on current quiz title"""
+        self.quiz.change_title(new_title)
+        self.title("Quiz Maker: " + self.quiz.title)
 
 
     # TODO
@@ -480,13 +520,8 @@ class QuizGui(tk.Tk):
         """QuizGui wrapper function to call quiz.read_user"""
         pass
 
-    def change_title(self):
-        """change window title based on current quiz title"""
-        if self.quiz.title:
-            self.title("Quiz Maker:" + self.quiz.title)
-        else:
-            self.title("Quiz Maker: Untitled")
 
+       
             
 
 
@@ -525,12 +560,15 @@ if __name__ == "__main__":
 
     quizzer.quiz.current_q = 0
     quizzer.print_question()
+    
 
     quizzer.mainloop()
 
 
 
 # TODO
+
+# work on QuizGui save method
 
 # add title
 # save data
