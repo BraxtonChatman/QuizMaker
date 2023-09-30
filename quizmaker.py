@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
 import os
+import json
 
 
 class Question():
@@ -71,6 +72,7 @@ class Quiz():
 
     def del_question(self, index):
         """Delete the current question"""
+
         if self.length > 1:
             self.q_list.pop(index)
             self.length -= 1
@@ -102,29 +104,62 @@ class Quiz():
         """Change quiz title"""
         self.title = new_title
 
-
-    # TODO
-    def save_admin(self, filename):
-        """Saves Quiz data to csv file from admin(quiz creator) mode"""
+    def save(self, filename):
+        """Save contents of Quiz to filename. First two lines of file are
+        quiz name (name of file, including path) and length of quiz. The
+        Questions in the quiz are then formatted and saved to the lines
+        of the file."""
+        
         with open(filename, "w") as f:
             f.write(filename + "\n")
             f.write(str(self.length) + "\n")
 
-##############################################################
             for question in self.q_list:
-                f.write(question.mc_optn[0] + "\n")
-            
+                # format question data in list to be json formatted and written to file
+                out_data = []
+                out_data.append(question.type)
+                out_data.append(question.q_text)
+                out_data.append(question.mc_ans)
+                out_data.append(question.mc_optn)
+                out_data.append(question.ca_ans)
+                out_data.append(question.ca_optn)
+                out_data.append(question.tf_ans)
+                out_data.append(question.wr_ans)
 
+                json.dump(out_data, f)
+                f.write("\n")               
 
-    def read_admin(self, filename):
-        """Reads data from csv file indicated by filename to present quiz
-        in admin(quiz creator) mode"""
-        pass
+    def read(self, filename):
+        """Filename is passed to function to indicate which file to open
+        quiz from. If file is properly formatted .txt file for quiz, then
+        contents will be read into Quiz."""
+        
+        with open(filename, "r") as f:
+            pathname = f.readline()[:-1]
+            quiz_length = f.readline()[:-1]
 
-    def read_user(self, filename):
-        """Reads data from csv file indicated by filename to present quiz
-        in user(quiz taker) mode"""
-        pass
+            # read quiz title and length from first two lines of file
+            self.title = os.path.basename(pathname)[:-4]
+            self.length = int(quiz_length)
+
+            # delete current question list
+            del(self.q_list[:])
+
+            # iterate through remaining lines of file to read in Questions
+            for line in f:
+                line_data = json.loads(line)
+                new_question = Question()
+
+                new_question.type = line_data[0]
+                new_question.q_text = line_data[1]
+                new_question.mc_ans = line_data[2]
+                new_question.mc_optn = line_data[3]
+                new_question.ca_ans = line_data[4]
+                new_question.ca_optn = line_data[5]
+                new_question.tf_ans = line_data[6]
+                new_question.wr_ans = line_data[7]
+
+                self.q_list.append(new_question)
 
 
 class QuizGui(tk.Tk):
@@ -180,7 +215,7 @@ class QuizGui(tk.Tk):
 
         # File tab suboptions
         file_menu.add_command(label = "New Quiz", command= None)
-        file_menu.add_command(label = "Open Quiz")
+        file_menu.add_command(label = "Open Quiz", command = self.read)
         file_menu.add_command(label = "Save", command=self.save)
         file_menu.add_command(label = "Save As", command=lambda: self.save(save_as=True))
         
@@ -198,6 +233,9 @@ class QuizGui(tk.Tk):
         # enable saving through hotkey Control+s and Control+Shift+S
         self.bind("<Control-s>", self.save)
         self.bind("<Control-Shift-S>", lambda event: self.save(save_as=True))
+
+        # enable file opening through hotkey Control+o
+        self.bind("<Control-o>", lambda event: self.read())
 
     def make_sframe(self):
         """Fill sidebar frame"""
@@ -220,7 +258,6 @@ class QuizGui(tk.Tk):
         self.question_text = tk.Text(self.current_question, height = 6, width = 60)
         self.question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
 
-        # TODO
         self.question_text.bind("<FocusOut>", lambda event: self.refresh_question())
 
     def make_aframe(self):
@@ -341,45 +378,61 @@ class QuizGui(tk.Tk):
             self.answer_text.insert(tk.END, current_answer)
 
     def refresh_question(self):
-        """updates the question and answer frames based on question response type being changed
-        and or when question text is edited and updates Question based on changes"""
+        """Updates the question and answer frames based on question response type being changed
+        and or when question text is edited, and updates Question based on changes"""
 
-        # change current question type to selected combobox option type
-        new_type = self.resp_dict[self.response_type_var.get()]
         current_question = self.quiz.q_list[self.quiz.current_q]
-        current_question.change_type(new_type)
+        current_type = current_question.type
 
         # update Question text based on question_text input
         new_text = self.question_text.get("1.0", tk.END)
         current_question.change_question(new_text)
 
         # update Question answer values when answer frame values are changed
-        if new_type == "MC":
+        if current_type == "MC":
             for i in range(4):
                 current_question.mc_optn[i] = self.mc_entries[i].get()
                 if int(self.mc_var.get()) == i + 1:
                     current_question.mc_ans = i - 1
 
-        elif new_type == "CA":
+        elif current_type == "CA":
             for i in range(4):
                 current_question.ca_ans[i] = self.ca_vars[i].get()
                 current_question.ca_optn[i] = self.ca_entries[i].get()
 
-        elif new_type == "T/F":
+        elif current_type == "T/F":
             new_answer = self.tf_var.get()
             current_question.tf_ans = new_answer
 
-        elif new_type == "WR":
+        elif current_type == "WR":
             new_answer = self.answer_text.get("1.0", tk.END)
             current_question.wr_ans = new_answer
+            
+        # change current question type to selected combobox option type
+        new_type = self.resp_dict[self.response_type_var.get()]
+        current_question.change_type(new_type)
 
         # print question with new type
         self.print_question()
         self.refresh_sidebar()
 
+    def clear_answers(self):
+        """Clear the answer widget values to be used before
+        adding or switching question"""
+        
+        self.answer_text.delete("1.0", tk.END)
+        self.tf_var.set(True)
+        self.mc_var.set("1")
+        for i in range(4):
+            self.ca_vars[i].set(False)
+            self.ca_entries[i].delete(0, tk.END)
+
     def add_question(self):
         """Inserts a new question into quiz list after the current one and
         switches focus to it"""
+
+        # clear answer widget values before adding blank question
+        self.clear_answers()     
 
         self.quiz.add_question()
         self.print_question()
@@ -460,6 +513,11 @@ class QuizGui(tk.Tk):
         and prints it. Direction is numeric index with -1 representing next, -2
         representing previous, and other values representing index for question
         in Quiz.q_list"""
+
+        # update Question answer values, then clear question gui widget values
+        self.refresh_question()
+        self.clear_answers()
+
         if direction == -1:
             self.quiz.next_q()
         
@@ -484,8 +542,10 @@ class QuizGui(tk.Tk):
             self.print_question()
 
     def save(self, save_as = False):
-        """Command function for save button that saves quiz data to csv
-        file by calling quiz.save_file"""
+        """Command and bind command for Save options (including Ctrl+s)
+        that prompts the user for a filename to save the quiz in and calls
+        to the Quiz.save method to write the contents of the Quiz to a file
+        with selected name."""
 
         # input new name for save file if quiz has not been named yet or "save as" has been selected
         cwd = os.getcwd()
@@ -496,34 +556,45 @@ class QuizGui(tk.Tk):
             if save_filename[-4:] != ".txt":
                 save_filename += ".txt"
 
+            # update self.file_location for future saves
             self.file_location = save_filename
 
             # use only the filename without path or extension for the quiz title
             new_title = os.path.basename(save_filename)[:-4]
             self.change_title(new_title)
 
-        # pass save file name to quiz.save_admin for file write
-        self.quiz.save_admin(self.file_location)
+        # pass save file name to quiz.save for file write
+        self.quiz.save(self.file_location)
 
-    def change_title(self, new_title):
+    def read(self):
+        """QuizGui wrapper function to call quiz.read Prompts the
+        user to select a file to open a quiz from. The file must be
+        a properly formatted .txt file, and will be read into Quiz
+        as well as update the sidebar, current question, and window title."""
+        
+        cwd = os.getcwd()
+        open_filename = filedialog.askopenfilename(initialdir=cwd)
+        if open_filename:
+            self.quiz.read(open_filename)
+            self.print_question()
+            self.refresh_sidebar()
+
+            self.change_title()
+
+    def change_title(self, new_title = ""):
         """change window title based on current quiz title"""
-        self.quiz.change_title(new_title)
-        self.title("Quiz Maker: " + self.quiz.title)
-
-
-    # TODO
-    def read_admin(self, filename):
-        """QuizGui wrapper function to call quiz.read_admin"""
-        pass
-
-    def read_user(self, filename):
-        """QuizGui wrapper function to call quiz.read_user"""
-        pass
-
-
        
-            
+        # get title from quiz if no title was input
+        if new_title == "":
+            new_title = self.quiz.title
+        else:
+            self.quiz.change_title(new_title)
 
+        # if no title, window title stays "Quiz Maker" otherwise quiz title too
+        if new_title == "":
+            self.title("Quiz Maker")
+        else:
+            self.title("Quiz Maker: " + self.quiz.title)      
 
 if __name__ == "__main__":
     quizzer = QuizGui()
@@ -558,7 +629,7 @@ if __name__ == "__main__":
     #quizzer.quiz.del_question(5)
     #quizzer.refresh_sidebar()
 
-    quizzer.quiz.current_q = 0
+    #quizzer.quiz.current_q = 0
     quizzer.print_question()
     
 
@@ -567,6 +638,14 @@ if __name__ == "__main__":
 
 
 # TODO
+
+# command line errors during read or save
+
+# open appears to be adding questions
+
+# loading rn.txt, adding question, and changing type to wr had prefilled answer text
+
+# error check open wrong file types
 
 # work on QuizGui save method
 
