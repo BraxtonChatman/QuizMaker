@@ -136,11 +136,11 @@ class Quiz():
         
         with open(filename, "r") as f:
             pathname = f.readline()[:-1]
-            quiz_length = f.readline()[:-1]
+            quiz_length = int(f.readline()[:-1])
 
             # read quiz title and length from first two lines of file
             self.title = os.path.basename(pathname)[:-4]
-            self.length = int(quiz_length)
+            self.length = int(quiz_length) 
 
             # delete current question list
             del(self.q_list[:])
@@ -154,9 +154,9 @@ class Quiz():
                 new_question.q_text = line_data[1]
                 new_question.mc_ans = line_data[2]
                 new_question.mc_optn = line_data[3]
-                new_question.ca_ans = line_data[4]
+                new_question.ca_ans = line_data[4] 
                 new_question.ca_optn = line_data[5]
-                new_question.tf_ans = line_data[6]
+                new_question.tf_ans = line_data[6] 
                 new_question.wr_ans = line_data[7]
 
                 self.q_list.append(new_question)
@@ -230,12 +230,15 @@ class QuizGui(tk.Tk):
         quiz_menu.add_command(label = "Stop Quiz")
         quiz_menu.add_command(label = "Question Weights")
 
-        # enable saving through hotkey Control+s and Control+Shift+S
+        # Enable saving through hotkey Control+s and Control+Shift+S
         self.bind("<Control-s>", self.save)
         self.bind("<Control-Shift-S>", lambda event: self.save(save_as=True))
 
-        # enable file opening through hotkey Control+o
+        # Enable file opening through hotkey Control+o
         self.bind("<Control-o>", lambda event: self.read())
+
+        # Enable question adding through hotkey Control+a
+        self.bind("<Control-a>", lambda event: self.add_question())
 
     def make_sframe(self):
         """Fill sidebar frame"""
@@ -280,16 +283,20 @@ class QuizGui(tk.Tk):
 
         # true or false answer space
         self.tf_var = tk.BooleanVar()
+        self.tf_var.set(True)
         self.true_button = ttk.Radiobutton(self.current_answer, text = " True", value = True, variable = self.tf_var)
         self.false_button = ttk.Radiobutton(self.current_answer, text = " False", value = False, variable = self.tf_var)
 
         # multiple choice answer space
         self.mc_var = tk.StringVar()
+        self.mc_var.set("1")
         self.mc_entries = [tk.Entry(self.current_answer, width = 70) for i in range(5)]
         self.mc_buttons = [ttk.Radiobutton(self.current_answer, text="", value="1234"[i], variable=self.mc_var) for i in range(4)]
 
         # check all that apply answer space
         self.ca_vars = [tk.BooleanVar() for i in range(4)]
+        for var in self.ca_vars:
+            var.set(False)
         self.ca_entries = [tk.Entry(self.current_answer, width = 70) for i in range(4)]
         self.ca_buttons = [tk.Checkbutton(self.current_answer, text = "", variable = self.ca_vars[i], onvalue=True, offvalue=False) for i in range(4)]
 
@@ -622,8 +629,8 @@ if __name__ == "__main__":
 
     ##############################################################################################
 
-    quizzer.quiz.q_list = [q1, q2, q3, q4, q5]
-    quizzer.quiz.length = 5
+    #quizzer.quiz.q_list = [q1, q2, q3, q4, q5]
+    #quizzer.quiz.length = 5
 
     quizzer.print_sidebar()
     #quizzer.quiz.del_question(5)
@@ -635,11 +642,9 @@ if __name__ == "__main__":
 
     quizzer.mainloop()
 
-
-
 # TODO
 
-# command line errors during read or save
+
 
 # open appears to be adding questions
 
