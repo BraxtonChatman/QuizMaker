@@ -133,7 +133,10 @@ class Quiz():
         """Filename is passed to function to indicate which file to open
         quiz from. If file is properly formatted .txt file for quiz, then
         contents will be read into Quiz."""
-        
+
+        # reset current question to first in list
+        self.current_q = 0
+
         with open(filename, "r") as f:
             pathname = f.readline()[:-1]
             quiz_length = int(f.readline()[:-1])
@@ -646,22 +649,5 @@ if __name__ == "__main__":
 
 
 
-# open appears to be adding questions
-
-# loading rn.txt, adding question, and changing type to wr had prefilled answer text
-
 # error check open wrong file types
-
-# work on QuizGui save method
-
-# add title
-# save data
-
-""" 1. Title
-    2. number of questions
-    3. question formatting
-        - type
-        - question text
-        - """
-
 # adjust q_frame and a_frame font and box size
