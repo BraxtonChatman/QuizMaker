@@ -426,17 +426,6 @@ class QuizGui(tk.Tk):
         self.print_question()
         self.refresh_sidebar()
 
-    def clear_answers(self):
-        """Clear the answer widget values to be used before
-        adding or switching question"""
-        
-        self.answer_text.delete("1.0", tk.END)
-        self.tf_var.set(True)
-        self.mc_var.set("1")
-        for i in range(4):
-            self.ca_vars[i].set(False)
-            self.ca_entries[i].delete(0, tk.END)
-
     def add_question(self):
         """Inserts a new question into quiz list after the current one and
         switches focus to it"""
@@ -454,28 +443,40 @@ class QuizGui(tk.Tk):
         sidebar. input -1 as index to delete current question. input -2 as index
         to delete currently selected item on sidebar"""
 
-        if index == -1:
-            index = self.quiz.current_q
+        if self.quiz.length > 1:
+            if index == -1:
+                index = self.quiz.current_q
 
-        if index == -2:
-            selection = self.scroll_list.curselection()[0]
-            index = selection
-            print(index)
+            if index == -2:
+                selection = self.scroll_list.curselection()[0]
+                index = selection
+                print(index)
 
-        # prompt user if they are sure they want to delete
-        message_string = "Are you sure you would like to delete this question?\n\n        There's no getting it back once you do."
-        del_text = self.quiz.q_list[index].q_text
-        del_title = "Delete Question {}: ".format(index + 1) + del_text
-        valid = messagebox.askyesnocancel(title=del_title, message=message_string)
+            # prompt user if they are sure they want to delete
+            message_string = "Are you sure you would like to delete this question?\n\n        There's no getting it back once you do."
+            del_text = self.quiz.q_list[index].q_text
+            del_title = "Delete Question {}: ".format(index + 1) + del_text
+            valid = messagebox.askyesnocancel(title=del_title, message=message_string)
 
-        if not valid:
-            return False
-            
-        self.quiz.del_question(index)
-        self.print_question()
-        self.refresh_sidebar()
+            if not valid:
+                return False
+                
+            self.quiz.del_question(index)
+            self.print_question()
+            self.refresh_sidebar()
 
-        return True
+            return True
+
+    def clear_answers(self):
+        """Clear the answer widget values to be used before
+        adding or switching question"""
+        
+        self.answer_text.delete("1.0", tk.END)
+        self.tf_var.set(True)
+        self.mc_var.set("1")
+        for i in range(4):
+            self.ca_vars[i].set(False)
+            self.ca_entries[i].delete(0, tk.END)
 
     def print_sidebar(self):
         """Iterates through quiz.q_list and formats question data on screen sidebar"""
@@ -606,48 +607,165 @@ class QuizGui(tk.Tk):
         else:
             self.title("Quiz Maker: " + self.quiz.title)      
 
+    def run_creator(self):
+        """Runs the QuizGui from the test creator side"""
+        self.print_sidebar()
+        self.print_question()
+        self.mainloop()
+
+
+class TakerGui(tk.Tk):
+    """Class for quiz taker/student gui."""
+
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.title("Quiz")
+        self.geometry("800x450")
+        self.state("zoomed")
+
+        # Quiz variable of GUI
+        self.quiz = Quiz()
+
+        # main window and sidebar
+        self.window = tk.Frame(self)
+        self.window.pack()
+        self.window.grid_propagate(0)
+
+        # make question frame widgets
+        self.make_qframe_user()
+
+    def make_qframe_user(self):
+        """Make the GUI widgets for the question_frame in the window frame"""
+        self.question_frame = tk.LabelFrame(self.window, width=500, height=300)
+        self.question_frame.pack(pady=(0,10))
+        self.question_frame.pack_propagate(0)
+
+        self.answer_frame = tk.Frame(self.question_frame, width=160, height=410)
+        self.answer_frame.pack()
+
+        # text space to display question text
+        self.question_text = tk.Text(self.answer_frame, height = 6, width = 60, state="disabled")
+        self.question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
+
+        # written response answer space
+        self.answer_text = tk.Text(self.answer_frame, height = 8, width = 60)
+        self.answer_label = tk.Label(self.answer_frame, text="Your Answer:")
+
+        # true or false answer space
+        self.tf_var = tk.StringVar()
+        self.tf_var.set(None)
+     
+        self.true_button = ttk.Radiobutton(self.answer_frame, text = " True", value = "True", variable = self.tf_var)
+        self.false_button = ttk.Radiobutton(self.answer_frame, text = " False", value = "False", variable = self.tf_var)
+
+
+        # multiple choice answer space
+        self.mc_var = tk.StringVar()
+        self.mc_var.set(None)
+        self.mc_buttons = [ttk.Radiobutton(self.answer_frame, text="", value="1234"[i], variable=self.mc_var) for i in range(4)]
+
+        # check all that apply answer space
+        self.ca_vars = [tk.BooleanVar() for i in range(4)]
+        for var in self.ca_vars:
+            var.set(False)
+        self.ca_buttons = [tk.Checkbutton(self.answer_frame, text = "", variable = self.ca_vars[i], onvalue=True, offvalue=False) for i in range(4)]
+  
+        # next, prev, and submit buttons
+        self.next_button = tk.Button(self.window, text="Next", width=8, command=self.next)
+        self.prev_button = tk.Button(self.window, text="Prev", width=8, command=self.prev)
+        self.submit_button = tk.Button(self.window, text="Submit", width=8, command=None)
+        
+        self.submit_button.pack(padx=5, pady=5, side="right")
+        self.prev_button.pack(padx=5, pady=5, side="left")
+        self.next_button.pack(padx=5, pady=5, side="left")
+
+
+
+    def read_student(self):
+        """Reads in the Quiz from a file"""
+        #TODO update the file selection
+        self.quiz.read("C:/Users/Braxton/Documents/Self/Programming/Projects/QuizMaker/testfile.txt")        
+
+    def print_question_student(self):
+        """Prints a given question to screen from the test takers point of view"""
+        current_question = self.quiz.q_list[self.quiz.current_q]
+
+        # update question frame question number
+        self.question_frame.config(text="Question {} / {}".format(self.quiz.current_q+1, self.quiz.length))
+
+        # question text 
+        self.question_text.config(state="normal")
+        self.question_text.delete("1.0", tk.END)
+        self.question_text.insert(tk.END, current_question.q_text)
+        self.question_text.config(state="disabled")
+
+        # clear previous response widget
+        wlist = self.answer_frame.winfo_children()
+        for child in wlist[1:]:
+            child.grid_forget()
+
+        # question answer formatted for multiple choice, single selection
+        if current_question.type == "MC":
+            for i in range(4):
+                self.mc_buttons[i].config(text=current_question.mc_optn[i])
+                self.mc_buttons[i].grid(row = i+2, column=0, padx=15, pady=9, sticky="w")
+             
+        # formatted for check all answer
+        elif current_question.type == "CA":
+            for i in range(4):
+                self.ca_buttons[i].config(text=current_question.ca_optn[i])
+                self.ca_buttons[i].grid(row = i + 2, column=0, padx=15, pady=8, sticky="w")
+             
+        # formatted for true/false answer
+        elif current_question.type == "T/F":
+            self.true_button.grid(row = 2, column = 0, padx = 25, pady = (40, 20), sticky="w")
+            self.false_button.grid(row = 3, column = 0, padx = 25, pady = 15, sticky="w")
+
+        # formatted for written response
+        elif current_question.type == "WR":
+            self.answer_label.grid(row = 2, column = 0, pady=(15,3), sticky="w")
+            self.answer_text.grid(row = 3, column = 0, pady = 0, columnspan=3)
+
+    def run_taker(self):
+        """Runs the QuizGui from the test taker side"""
+        self.read_student()
+
+        self.print_question_student()
+
+        self.mainloop()
+
+    def next(self):
+        """Switch to the next question if option is allowed"""
+        if self.quiz.current_q < self.quiz.length - 1:
+            self.quiz.current_q += 1
+            self.print_question_student()
+
+    def prev(self):
+        """Switch to the previous question if option is allowed"""
+        if self.quiz.current_q > 0:
+            self.quiz.current_q -= 1
+            self.print_question_student()
+
+
+        
+
 if __name__ == "__main__":
-    quizzer = QuizGui()
-
-    #### Test Questions #######################################################################################
-    q1 = Question(text = "What is the first question?", type = "MC") #, response = "this one")
-    q1.mc_optn = ["The next one", "this one", "the previous one", "none"]
-    q1.mc_ans = 2
-    
-    q2 = Question(text = "What is a true false question?", type = "WR") #, response = "not this one")
-    q2.wr_ans = "A true/false question is one that has a binary option being either True, or False."
-    
-    
-    q3 = Question(text = "Who was there when you saw it happen besides Kyle?", type="CA") #, response="nobody else was there")
-    q3.ca_optn = ["Maddie", "Luke", "Davie", "Allen"]
-    q3.ca_ans = [True, False, True, True]
-    
-    q4 = Question(text = "I am hot", type = "T/F")
-    q4.tf_ans = False
+    #quizzer = QuizGui()
+    #quizzer.run_creator()
+    taker = TakerGui()
+    taker.run_taker()
     
 
-    q5 = Question(text = "when is my birthday?", type="MC")
-    q5.mc_optn = ["June 18", "June 12", "June 0", "June 100"]
-    q5.mc_ans = 1
 
-    ##############################################################################################
-
-    #quizzer.quiz.q_list = [q1, q2, q3, q4, q5]
-    #quizzer.quiz.length = 5
-
-    quizzer.print_sidebar()
-    #quizzer.quiz.del_question(5)
-    #quizzer.refresh_sidebar()
-
-    #quizzer.quiz.current_q = 0
-    quizzer.print_question()
-    
-
-    quizzer.mainloop()
 
 # TODO
 
+# reslove StringVar and BooleanVar types in QuizTaker class
+# develop method for storing student quiz data
+# complete student submit button
+# create login access
 
+# test taker pov
 
 # error check open wrong file types
 # adjust q_frame and a_frame font and box size
