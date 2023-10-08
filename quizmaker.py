@@ -623,8 +623,15 @@ class TakerGui(tk.Tk):
         self.geometry("800x450")
         self.state("zoomed")
 
+        # quiz file location
+        self.file_location = None
+
         # Quiz variable of GUI
         self.quiz = Quiz()
+        
+        # student name and list to contain student responses
+        self.student_name = ""
+        self.response_list = []
 
         # main window and sidebar
         self.window = tk.Frame(self)
@@ -648,7 +655,7 @@ class TakerGui(tk.Tk):
         self.question_text.grid(row = 0, column = 0, columnspan = 2, pady = (5, 0))
 
         # written response answer space
-        self.answer_text = tk.Text(self.answer_frame, height = 8, width = 60)
+        self.answer_text = tk.Text(self.answer_frame, height = 8, width = 60, state="normal")
         self.answer_label = tk.Label(self.answer_frame, text="Your Answer:")
 
         # true or false answer space
@@ -657,7 +664,6 @@ class TakerGui(tk.Tk):
      
         self.true_button = ttk.Radiobutton(self.answer_frame, text = " True", value = "True", variable = self.tf_var)
         self.false_button = ttk.Radiobutton(self.answer_frame, text = " False", value = "False", variable = self.tf_var)
-
 
         # multiple choice answer space
         self.mc_var = tk.StringVar()
@@ -673,18 +679,29 @@ class TakerGui(tk.Tk):
         # next, prev, and submit buttons
         self.next_button = tk.Button(self.window, text="Next", width=8, command=self.next)
         self.prev_button = tk.Button(self.window, text="Prev", width=8, command=self.prev)
-        self.submit_button = tk.Button(self.window, text="Submit", width=8, command=None)
+        self.submit_button = tk.Button(self.window, text="Submit", width=8, command=lambda: print(self.response_list))
         
         self.submit_button.pack(padx=5, pady=5, side="right")
         self.prev_button.pack(padx=5, pady=5, side="left")
         self.next_button.pack(padx=5, pady=5, side="left")
 
-
-
     def read_student(self):
-        """Reads in the Quiz from a file"""
-        #TODO update the file selection
-        self.quiz.read("C:/Users/Braxton/Documents/Self/Programming/Projects/QuizMaker/testfile.txt")        
+        """Reads in the Quiz from a file"""        
+        cwd = os.getcwd()
+        open_filename = filedialog.askopenfilename(initialdir=cwd)
+        if open_filename:
+            self.file_location = os.path.basename(open_filename)[:-4]
+            self.quiz.read(open_filename)
+
+            self.response_list = [None] * (self.quiz.length+1)
+            self.response_list[0] = self.student_name
+
+    def save_student(self):
+        """Saves the input values of quiz completed by student to .txt file"""
+        save_filename = self.file_location + "_studentdata.txt"
+
+        with open(save_filename, "a") as f:
+            f.write(json.dumps(self.response_list)+'\n')
 
     def print_question_student(self):
         """Prints a given question to screen from the test takers point of view"""
@@ -737,6 +754,25 @@ class TakerGui(tk.Tk):
     def next(self):
         """Switch to the next question if option is allowed"""
         if self.quiz.current_q < self.quiz.length - 1:
+            current_question = self.quiz.q_list[self.quiz.current_q]
+
+            # save the current response input to the response list
+            if current_question.type == "MC":
+                student_answer = self.mc_var.get()
+                self.response_list[self.quiz.current_q+1] = student_answer
+
+            elif current_question.type == "CA":
+                student_answer = [checkbox.get() for checkbox in self.ca_vars]
+                self.response_list[self.quiz.current_q+1] = student_answer
+            
+            elif current_question.type == "T/F":
+                student_answer = self.tf_var.get()
+                self.response_list[self.quiz.current_q+1] = student_answer
+            
+            elif current_question.type == "WR":
+                student_answer = self.answer_text.get("1.0", tk.END)
+                self.response_list[self.quiz.current_q+1] = student_answer
+   
             self.quiz.current_q += 1
             self.print_question_student()
 
