@@ -1,7 +1,7 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
-from tkinter import filedialog
+from tkinter import ttk, messagebox, filedialog
+#from tkinter import messagebox
+#from tkinter import filedialog
 import os
 import json
 
@@ -688,7 +688,9 @@ class TakerGui(tk.Tk):
     def read_student(self):
         """Reads in the Quiz from a file"""        
         cwd = os.getcwd()
+        self.update_idletasks()
         open_filename = filedialog.askopenfilename(initialdir=cwd)
+
         if open_filename:
             self.file_location = os.path.basename(open_filename)[:-4]
             self.quiz.read(open_filename)
@@ -746,7 +748,7 @@ class TakerGui(tk.Tk):
     def run_taker(self):
         """Runs the QuizGui from the test taker side"""
         self.read_student()
-
+        
         self.print_question_student()
 
         self.mainloop()
@@ -779,6 +781,25 @@ class TakerGui(tk.Tk):
     def prev(self):
         """Switch to the previous question if option is allowed"""
         if self.quiz.current_q > 0:
+            current_question = self.quiz.q_list[self.quiz.current_q]
+
+            # save the current response input to the response list
+            if current_question.type == "MC":
+                student_answer = self.mc_var.get()
+                self.response_list[self.quiz.current_q+1] = student_answer
+
+            elif current_question.type == "CA":
+                student_answer = [checkbox.get() for checkbox in self.ca_vars]
+                self.response_list[self.quiz.current_q+1] = student_answer
+            
+            elif current_question.type == "T/F":
+                student_answer = self.tf_var.get()
+                self.response_list[self.quiz.current_q+1] = student_answer
+            
+            elif current_question.type == "WR":
+                student_answer = self.answer_text.get("1.0", tk.END)
+                self.response_list[self.quiz.current_q+1] = student_answer
+
             self.quiz.current_q -= 1
             self.print_question_student()
 
