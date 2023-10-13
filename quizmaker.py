@@ -679,7 +679,7 @@ class TakerGui(tk.Tk):
         # next, prev, and submit buttons
         self.next_button = tk.Button(self.window, text="Next", width=8, command=self.next)
         self.prev_button = tk.Button(self.window, text="Prev", width=8, command=self.prev)
-        self.submit_button = tk.Button(self.window, text="Submit", width=8, command=lambda: print(self.response_list))
+        self.submit_button = tk.Button(self.window, text="Submit", width=8, command=self.submit)
         
         self.submit_button.pack(padx=5, pady=5, side="right")
         self.prev_button.pack(padx=5, pady=5, side="left")
@@ -708,6 +708,7 @@ class TakerGui(tk.Tk):
     def print_question_student(self):
         """Prints a given question to screen from the test takers point of view"""
         current_question = self.quiz.q_list[self.quiz.current_q]
+        current_reponse = self.response_list[self.quiz.current_q + 1]
 
         # update question frame question number
         self.question_frame.config(text="Question {} / {}".format(self.quiz.current_q+1, self.quiz.length))
@@ -728,23 +729,47 @@ class TakerGui(tk.Tk):
             for i in range(4):
                 self.mc_buttons[i].config(text=current_question.mc_optn[i])
                 self.mc_buttons[i].grid(row = i+2, column=0, padx=15, pady=9, sticky="w")
+
+                # response is empty unless previously answered by student
+                if current_reponse == None:
+                    self.mc_var.set("")
+                else:
+                    self.mc_var.set(current_reponse)
              
         # formatted for check all answer
         elif current_question.type == "CA":
             for i in range(4):
                 self.ca_buttons[i].config(text=current_question.ca_optn[i])
                 self.ca_buttons[i].grid(row = i + 2, column=0, padx=15, pady=8, sticky="w")
-             
+           
+                if current_reponse == None:
+                    self.ca_vars[i].set(False)
+                else:
+                    self.ca_vars[i].set(current_reponse[i])
+
         # formatted for true/false answer
         elif current_question.type == "T/F":
             self.true_button.grid(row = 2, column = 0, padx = 25, pady = (40, 20), sticky="w")
             self.false_button.grid(row = 3, column = 0, padx = 25, pady = 15, sticky="w")
+
+            # response is empty unless previously answered by student
+            if current_reponse == None:
+                self.tf_var.set("")
+            else:
+                self.tf_var.set(current_reponse)
 
         # formatted for written response
         elif current_question.type == "WR":
             self.answer_label.grid(row = 2, column = 0, pady=(15,3), sticky="w")
             self.answer_text.grid(row = 3, column = 0, pady = 0, columnspan=3)
 
+            # response is empty unless previously answered by student
+            if current_reponse == None:
+                self.answer_text.delete("1.0", tk.END)
+            else:
+                self.answer_text.delete("1.0", tk.END)
+                self.answer_text.insert(tk.END, current_reponse)
+                
     def run_taker(self):
         """Runs the QuizGui from the test taker side"""
         self.read_student()
@@ -803,6 +828,30 @@ class TakerGui(tk.Tk):
             self.quiz.current_q -= 1
             self.print_question_student()
 
+    def submit(self):
+        """Command function for submit button. Verifies that the user is done,
+        and updates current answer selection to response_list, then writes list to file."""
+        
+        # save the current response input to the response list
+        current_question = self.quiz.q_list[self.quiz.current_q]
+        if current_question.type == "MC":
+            student_answer = self.mc_var.get()
+            self.response_list[self.quiz.current_q+1] = student_answer
+
+        elif current_question.type == "CA":
+            student_answer = [checkbox.get() for checkbox in self.ca_vars]
+            self.response_list[self.quiz.current_q+1] = student_answer
+        
+        elif current_question.type == "T/F":
+            student_answer = self.tf_var.get()
+            self.response_list[self.quiz.current_q+1] = student_answer
+        
+        elif current_question.type == "WR":
+            student_answer = self.answer_text.get("1.0", tk.END)
+            self.response_list[self.quiz.current_q+1] = student_answer
+        
+        # print responses
+        print(self.response_list)
 
         
 
@@ -817,6 +866,8 @@ if __name__ == "__main__":
 
 # TODO
 
+# update mc radiobuttons maintaining selection over different questions in questaker
+
 # reslove StringVar and BooleanVar types in QuizTaker class
 # develop method for storing student quiz data
 # complete student submit button
@@ -825,4 +876,5 @@ if __name__ == "__main__":
 # test taker pov
 
 # error check open wrong file types
+# error check filedialog cancel
 # adjust q_frame and a_frame font and box size
