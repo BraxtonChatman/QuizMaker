@@ -16,7 +16,7 @@ class Question():
         self.q_text = text
 
         # multiple choice correct answer indicator and answer options
-        self.mc_ans = ""
+        self.mc_ans = "1"
         self.mc_optn = ["", "", "", ""]
 
         # check all correct answer indicator and answer options
@@ -561,6 +561,10 @@ class QuizGui(tk.Tk):
         if self.quiz.title == "" or save_as == True:
             save_filename = filedialog.asksaveasfilename(defaultextension=".txt", initialdir=cwd, filetypes=(("Text File", "*.txt"),))
             
+            # do nothing if filedialog window is canceled
+            if save_filename == "":
+                return 0
+
             # add a .txt extension if an alternative extension was input
             if save_filename[-4:] != ".txt":
                 save_filename += ".txt"
@@ -863,7 +867,7 @@ class TakerGui(tk.Tk):
     def submit(self):
         """Command function for submit button. Verifies that the user is done,
         and updates current answer selection to response_list, then writes list to file."""
-        
+
         # save the current response input to the response list
         current_question = self.quiz.q_list[self.quiz.current_q]
         if current_question.type == "MC":
@@ -882,44 +886,44 @@ class TakerGui(tk.Tk):
             student_answer = self.answer_text.get("1.0", tk.END)
             self.response_list[self.quiz.current_q+2] = student_answer
         
-        # print responses
-        print(self.grade_quiz())
-        print(self.response_list)
-        self.save_student()
+        # make sure all questions have been answered (only checks MC and TF)
+        quiz_complete = True
+        for question_number in range(self.quiz.length):
+            question = self.quiz.q_list[question_number]
+            
+            if question.type == "MC":
+                if self.response_list[question_number + 2] not in list("1234"):
+                    quiz_complete = False
+
+            elif question.type == "T/F":
+                if self.response_list[question_number + 2] not in ["True", "False"]:
+                    quiz_complete = False
+                    
+
+        print("Quiz complete: ", quiz_complete)
+        if quiz_complete:
+            # print responses
+            print(self.grade_quiz())
+            print(self.response_list)
+            
+            # save student responses with name and grade to file
+            self.save_student()
+
+            # TODO: Send to main menu
+            self.destroy()
 
         
 
 if __name__ == "__main__":
-    #quizzer = QuizGui()
-    #quizzer.run_creator()
-    taker = TakerGui()
-    taker.run_taker()
+    quizzer = QuizGui()
+    quizzer.run_creator()
+    #taker = TakerGui()
+    #taker.run_taker()
     
-
-
-# UPDATED:
-    # added refresh to add question in quizgui
-    # stop refrsh question continuously adding newlines to wr answers 
-    # stop newlines added to wr in quiz taker
-    # update file_location when reading a quiz file from QuizGui
-    # add grade_quiz function to quiz taker
-
-
 
 # TODO
 
-# add grade function
-
-# develop method for storing student quiz data
-# complete student submit button
-
-# add validation check to quizzer to make sure all correct answers are supplied by admin when saving
-
-
+# create a view student function for quizgui to see student responses
+# create base menu after student login
 # create login access
 
-# reslove StringVar and BooleanVar types in QuizTaker class
-
-# error check open wrong file types
-# error check filedialog cancel
-# adjust q_frame and a_frame font and box size
