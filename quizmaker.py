@@ -18,7 +18,7 @@ class Question():
         self.q_text = text
 
         # multiple choice correct answer indicator and answer options
-        self.mc_ans = 0
+        self.mc_ans = ""
         self.mc_optn = ["", "", "", ""]
 
         # check all correct answer indicator and answer options
@@ -350,15 +350,14 @@ class QuizGui(tk.Tk):
 
         # question answer formatted for multiple choice, single selection
         if current_question.type == "MC":
+            self.mc_var.set(current_question.mc_ans)
+
             for i in range(4):
                 self.mc_buttons[i].grid(row = i+2, column=0, pady = 5)
                 self.mc_entries[i].grid(row = i+2, column=1, columnspan = 2, pady = 5)
 
                 self.mc_entries[i].delete(0, tk.END)
                 self.mc_entries[i].insert(tk.END, current_question.mc_optn[i])
-
-                if i == current_question.mc_ans - 1:
-                    self.mc_var.set(str(i + 1))
 
         # formatted for check all answer
         elif current_question.type == "CA":
@@ -400,10 +399,9 @@ class QuizGui(tk.Tk):
 
         # update Question answer values when answer frame values are changed
         if current_type == "MC":
+            current_question.mc_ans = self.mc_var.get()
             for i in range(4):
                 current_question.mc_optn[i] = self.mc_entries[i].get()
-                if int(self.mc_var.get()) == i + 1:
-                    current_question.mc_ans = i - 1
 
         elif current_type == "CA":
             for i in range(4):
@@ -431,7 +429,7 @@ class QuizGui(tk.Tk):
         switches focus to it"""
 
         # clear answer widget values before adding blank question
-        self.clear_answers()     
+        #self.clear_answers()     
 
         self.quiz.add_question()
         self.print_question()
@@ -467,6 +465,7 @@ class QuizGui(tk.Tk):
 
             return True
 
+# TODO: delete if this isnt helping anything
     def clear_answers(self):
         """Clear the answer widget values to be used before
         adding or switching question"""
@@ -527,7 +526,7 @@ class QuizGui(tk.Tk):
 
         # update Question answer values, then clear question gui widget values
         self.refresh_question()
-        self.clear_answers()
+       # self.clear_answers()
 
         if direction == -1:
             self.quiz.next_q()
@@ -856,10 +855,10 @@ class TakerGui(tk.Tk):
         
 
 if __name__ == "__main__":
-    #quizzer = QuizGui()
-    #quizzer.run_creator()
-    taker = TakerGui()
-    taker.run_taker()
+    quizzer = QuizGui()
+    quizzer.run_creator()
+    #taker = TakerGui()
+    #taker.run_taker()
     
 
 
@@ -867,6 +866,8 @@ if __name__ == "__main__":
 # TODO
 
 # update mc radiobuttons maintaining selection over different questions in questaker
+
+# add validation check to quizzer to make sure all correct answers are supplied by admin when saving
 
 # reslove StringVar and BooleanVar types in QuizTaker class
 # develop method for storing student quiz data
