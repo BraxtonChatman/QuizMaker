@@ -1,7 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-#from tkinter import messagebox
-#from tkinter import filedialog
 import os
 import json
 
@@ -388,7 +386,8 @@ class QuizGui(tk.Tk):
 
     def refresh_question(self):
         """Updates the question and answer frames based on question response type being changed
-        and or when question text is edited, and updates Question based on changes"""
+        and or when question text is edited, or when question is added and updates Question 
+        based on changes"""
 
         current_question = self.quiz.q_list[self.quiz.current_q]
         current_type = current_question.type
@@ -414,7 +413,7 @@ class QuizGui(tk.Tk):
 
         elif current_type == "WR":
             new_answer = self.answer_text.get("1.0", tk.END)
-            current_question.wr_ans = new_answer
+            current_question.wr_ans = new_answer[:-1]
             
         # change current question type to selected combobox option type
         new_type = self.resp_dict[self.response_type_var.get()]
@@ -429,7 +428,8 @@ class QuizGui(tk.Tk):
         switches focus to it"""
 
         # clear answer widget values before adding blank question
-        #self.clear_answers()     
+        self.refresh_question()
+        self.clear_answers()     
 
         self.quiz.add_question()
         self.print_question()
@@ -465,7 +465,6 @@ class QuizGui(tk.Tk):
 
             return True
 
-# TODO: delete if this isnt helping anything
     def clear_answers(self):
         """Clear the answer widget values to be used before
         adding or switching question"""
@@ -526,7 +525,7 @@ class QuizGui(tk.Tk):
 
         # update Question answer values, then clear question gui widget values
         self.refresh_question()
-       # self.clear_answers()
+        self.clear_answers()
 
         if direction == -1:
             self.quiz.next_q()
@@ -585,6 +584,14 @@ class QuizGui(tk.Tk):
         cwd = os.getcwd()
         open_filename = filedialog.askopenfilename(initialdir=cwd)
         if open_filename:
+
+            # add a .txt extension if an alternative extension was input
+            if open_filename[-4:] != ".txt":
+                open_filename += ".txt"
+
+            # update self.file_location for future saves
+            self.file_location = open_filename
+
             self.quiz.read(open_filename)
             self.print_question()
             self.refresh_sidebar()
@@ -628,7 +635,7 @@ class TakerGui(tk.Tk):
         # Quiz variable of GUI
         self.quiz = Quiz()
         
-        # student name and list to contain student responses
+        # student name and list to contain student responses, and score
         self.student_name = ""
         self.response_list = []
 
@@ -694,8 +701,9 @@ class TakerGui(tk.Tk):
             self.file_location = os.path.basename(open_filename)[:-4]
             self.quiz.read(open_filename)
 
-            self.response_list = [None] * (self.quiz.length+1)
+            self.response_list = [None] * (self.quiz.length+2)
             self.response_list[0] = self.student_name
+            self.response_list[1] = 0
 
     def save_student(self):
         """Saves the input values of quiz completed by student to .txt file"""
@@ -704,10 +712,35 @@ class TakerGui(tk.Tk):
         with open(save_filename, "a") as f:
             f.write(json.dumps(self.response_list)+'\n')
 
+    def grade_quiz(self):
+        """Calculates quiz grade based on correct answers, and inserts in response_list.
+        If written response questions are included in quiz, only the partial grade
+        based on the non-written response questions is calculated."""
+        answers_correct = 0
+        for question_number in range(self.quiz.length):
+            
+            if self.quiz.q_list[question_number].type == "MC":
+                if self.response_list[question_number+2] == self.quiz.q_list[question_number].mc_ans:
+                    answers_correct += 1
+
+            elif self.quiz.q_list[question_number].type == "CA":
+                if self.response_list[question_number+2] == self.quiz.q_list[question_number].ca_ans:
+                    answers_correct += 1
+
+            elif self.quiz.q_list[question_number].type == "T/F":
+                if self.response_list[question_number+2] == str(self.quiz.q_list[question_number].tf_ans):
+                    answers_correct += 1
+
+            elif self.quiz.q_list[question_number].type == "WR":
+                pass
+
+        self.response_list[1] = answers_correct
+        return answers_correct
+
     def print_question_student(self):
         """Prints a given question to screen from the test takers point of view"""
         current_question = self.quiz.q_list[self.quiz.current_q]
-        current_reponse = self.response_list[self.quiz.current_q + 1]
+        current_reponse = self.response_list[self.quiz.current_q + 2]
 
         # update question frame question number
         self.question_frame.config(text="Question {} / {}".format(self.quiz.current_q+1, self.quiz.length))
@@ -785,19 +818,19 @@ class TakerGui(tk.Tk):
             # save the current response input to the response list
             if current_question.type == "MC":
                 student_answer = self.mc_var.get()
-                self.response_list[self.quiz.current_q+1] = student_answer
+                self.response_list[self.quiz.current_q+2] = student_answer
 
             elif current_question.type == "CA":
                 student_answer = [checkbox.get() for checkbox in self.ca_vars]
-                self.response_list[self.quiz.current_q+1] = student_answer
+                self.response_list[self.quiz.current_q+2] = student_answer
             
             elif current_question.type == "T/F":
                 student_answer = self.tf_var.get()
-                self.response_list[self.quiz.current_q+1] = student_answer
+                self.response_list[self.quiz.current_q+2] = student_answer
             
             elif current_question.type == "WR":
                 student_answer = self.answer_text.get("1.0", tk.END)
-                self.response_list[self.quiz.current_q+1] = student_answer
+                self.response_list[self.quiz.current_q+2] = student_answer[:-1]
    
             self.quiz.current_q += 1
             self.print_question_student()
@@ -810,19 +843,19 @@ class TakerGui(tk.Tk):
             # save the current response input to the response list
             if current_question.type == "MC":
                 student_answer = self.mc_var.get()
-                self.response_list[self.quiz.current_q+1] = student_answer
+                self.response_list[self.quiz.current_q+2] = student_answer
 
             elif current_question.type == "CA":
                 student_answer = [checkbox.get() for checkbox in self.ca_vars]
-                self.response_list[self.quiz.current_q+1] = student_answer
+                self.response_list[self.quiz.current_q+2] = student_answer
             
             elif current_question.type == "T/F":
                 student_answer = self.tf_var.get()
-                self.response_list[self.quiz.current_q+1] = student_answer
+                self.response_list[self.quiz.current_q+2] = student_answer
             
             elif current_question.type == "WR":
                 student_answer = self.answer_text.get("1.0", tk.END)
-                self.response_list[self.quiz.current_q+1] = student_answer
+                self.response_list[self.quiz.current_q+2] = student_answer[:-1]
 
             self.quiz.current_q -= 1
             self.print_question_student()
@@ -835,46 +868,57 @@ class TakerGui(tk.Tk):
         current_question = self.quiz.q_list[self.quiz.current_q]
         if current_question.type == "MC":
             student_answer = self.mc_var.get()
-            self.response_list[self.quiz.current_q+1] = student_answer
+            self.response_list[self.quiz.current_q+2] = student_answer
 
         elif current_question.type == "CA":
             student_answer = [checkbox.get() for checkbox in self.ca_vars]
-            self.response_list[self.quiz.current_q+1] = student_answer
+            self.response_list[self.quiz.current_q+2] = student_answer
         
         elif current_question.type == "T/F":
             student_answer = self.tf_var.get()
-            self.response_list[self.quiz.current_q+1] = student_answer
+            self.response_list[self.quiz.current_q+2] = student_answer
         
         elif current_question.type == "WR":
             student_answer = self.answer_text.get("1.0", tk.END)
-            self.response_list[self.quiz.current_q+1] = student_answer
+            self.response_list[self.quiz.current_q+2] = student_answer
         
         # print responses
+        print(self.grade_quiz())
         print(self.response_list)
+        self.save_student()
 
         
 
 if __name__ == "__main__":
-    quizzer = QuizGui()
-    quizzer.run_creator()
-    #taker = TakerGui()
-    #taker.run_taker()
+    #quizzer = QuizGui()
+    #quizzer.run_creator()
+    taker = TakerGui()
+    taker.run_taker()
     
+
+
+# UPDATED:
+    # added refresh to add question in quizgui
+    # stop refrsh question continuously adding newlines to wr answers 
+    # stop newlines added to wr in quiz taker
+    # update file_location when reading a quiz file from QuizGui
+    # add grade_quiz function to quiz taker
 
 
 
 # TODO
 
-# update mc radiobuttons maintaining selection over different questions in questaker
+# add grade function
+
+# develop method for storing student quiz data
+# complete student submit button
 
 # add validation check to quizzer to make sure all correct answers are supplied by admin when saving
 
-# reslove StringVar and BooleanVar types in QuizTaker class
-# develop method for storing student quiz data
-# complete student submit button
+
 # create login access
 
-# test taker pov
+# reslove StringVar and BooleanVar types in QuizTaker class
 
 # error check open wrong file types
 # error check filedialog cancel
