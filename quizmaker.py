@@ -209,27 +209,27 @@ class QuizGui(tk.Tk):
         # Menu options "File", "Edit", "Quiz"
         file_menu = tk.Menu(self.main_menu, tearoff = 0)
         edit_menu = tk.Menu(self.main_menu, tearoff = 0)
-        quiz_menu = tk.Menu(self.main_menu, tearoff = 0)
         self.main_menu.add_cascade(label = "File", menu = file_menu)
         self.main_menu.add_cascade(label = "Edit", menu = edit_menu)
-        self.main_menu.add_cascade(label = "Quiz", menu = quiz_menu)
+            #quiz_menu = tk.Menu(self.main_menu, tearoff = 0)
+            #self.main_menu.add_cascade(label = "Quiz", menu = quiz_menu)
 
         # File tab suboptions
-        file_menu.add_command(label = "New Quiz", command= None)
         file_menu.add_command(label = "Open Quiz", command = self.read)
         file_menu.add_command(label = "Save", command=self.save)
         file_menu.add_command(label = "Save As", command=lambda: self.save(save_as=True))
+            #file_menu.add_command(label = "New Quiz", command= None)
         
         # Edit tab suboptions
-        edit_menu.add_command(label = "Change Question Order", command=None)
-        edit_menu.add_command(label = "Add Question")
-        edit_menu.add_command(label = "Delete Question")
-        edit_menu.add_command(label = "Change Quiz Title")
+        edit_menu.add_command(label = "Add Question", command = self.add_question)
+        edit_menu.add_command(label = "Delete Question", command = lambda: self.delete_question(-1))
+            #edit_menu.add_command(label = "Change Quiz Title")
+            #edit_menu.add_command(label = "Change Question Order", command=None)
 
-        # Quiz tab suboptions
-        quiz_menu.add_command(label = "Run Quiz")
-        quiz_menu.add_command(label = "Stop Quiz")
-        quiz_menu.add_command(label = "Question Weights")
+        # Quiz tab suboptions (potential later addition)
+            #quiz_menu.add_command(label = "Run Quiz")
+            #quiz_menu.add_command(label = "Stop Quiz")
+            #quiz_menu.add_command(label = "Question Weights")
 
         # Enable saving through hotkey Control+s and Control+Shift+S
         self.bind("<Control-s>", self.save)
@@ -323,9 +323,9 @@ class QuizGui(tk.Tk):
         self.add_question_button.grid(row = 0, column = 2)
         self.del_question_button.grid(row = 0, column = 3)
         self.save_button.grid(row = 0, column = 4)
-        self.fin_button.grid(row = 0, column = 5)
+            # complete later #self.fin_button.grid(row = 0, column = 5)
 
-        for widget in self.options.winfo_children():
+        for widget in self.options.winfo_children()[:-1]: # exclude finish button to be completed later
             widget.configure(borderwidth = 3)
             widget.grid_configure(padx = 5, pady = (6, 3))
 
@@ -699,7 +699,7 @@ class TakerGui(tk.Tk):
         """Reads in the Quiz from a file"""        
         cwd = os.getcwd()
         self.update_idletasks()
-        open_filename = filedialog.askopenfilename(initialdir=cwd)
+        open_filename = filedialog.askopenfilename(initialdir=cwd, title="Open Quiz file")
 
         if open_filename:
             self.file_location = os.path.basename(open_filename)[:-4]
@@ -708,6 +708,10 @@ class TakerGui(tk.Tk):
             self.response_list = [None] * (self.quiz.length+2)
             self.response_list[0] = self.student_name
             self.response_list[1] = 0
+            return True
+        
+        else:
+            return False
 
     def save_student(self):
         """Saves the input values of quiz completed by student to .txt file"""
@@ -808,7 +812,14 @@ class TakerGui(tk.Tk):
                 
     def run_taker(self):
         """Runs the QuizGui from the test taker side"""
-        self.read_student()
+        counter = 0
+        while not self.read_student():
+            counter += 1
+            if counter > 2:
+                close = messagebox.askyesno(title="Close Program", message="Would you like to close the program?")
+                if close:
+                    self.destroy()
+                    return
         
         self.print_question_student()
 
@@ -909,21 +920,62 @@ class TakerGui(tk.Tk):
             # save student responses with name and grade to file
             self.save_student()
 
-            # TODO: Send to main menu
-            self.destroy()
+            # clear answer widgets, disable next, prev, submit buttons, and display score in question text
+            wlist = self.answer_frame.winfo_children()
+            for child in wlist[1:]:
+                child.grid_forget()
 
-        
+            self.next_button.config(state="disabled")
+            self.prev_button.config(state="disabled")
+            self.submit_button.config(state="disabled")
 
-if __name__ == "__main__":
+            self.question_frame.config(text="Score: ")
+            self.question_text.config(state="normal")
+            self.question_text.delete("1.0", tk.END)
+
+            correct = self.response_list[1]
+            total = self.quiz.length
+            percent = 100 * correct/total
+
+            self.question_text.insert(tk.END, "{0}/{1} = {2:.2f}%".format(correct, total, percent)) 
+            self.question_text.config(state="disabled")
+
+
+def run_teacher(startup_root):
+    """Startup function for teacher/quiz creator pov"""
+    startup_root.destroy() 
     quizzer = QuizGui()
     quizzer.run_creator()
-    #taker = TakerGui()
-    #taker.run_taker()
-    
 
-# TODO
+def run_student(startup_root):
+    """Startup function for student/quiz taker pov""" 
+    startup_root.destroy()
+    taker = TakerGui()
+    taker.run_taker()
 
-# create a view student function for quizgui to see student responses
-# create base menu after student login
-# create login access
+if __name__ == "__main__":
 
+    # root for startup screen
+    root = tk.Tk()
+    root.title("Quiz Maker")
+    root.geometry("550x350")
+
+    # widgets
+    startup_window = tk.Frame(root)
+
+    login_frame = tk.LabelFrame(startup_window, text = "Login", font=("bold", 15))
+    teacher_label = tk.Label(login_frame, text = "Click here if you are a teacher: ", font=50)
+    student_label = tk.Label(login_frame, text = "Click here if you are a student: ", font=50)
+    teacher_button = tk.Button(login_frame, text="Teacher", command = lambda: run_teacher(root), font=("bold", 13))
+    student_button = tk.Button(login_frame, text="Student", command = lambda: run_student(root), font=("bold", 13))
+
+    # geometry management
+    startup_window.pack()
+
+    login_frame.grid(row=0, column=0, columnspan=2, padx=20, pady=20)
+    teacher_label.grid(row=1, column=0, padx=25, pady=15)
+    teacher_button.grid(row=1, column=1, padx=25, pady=15)
+    student_label.grid(row=2, column=0, padx=25, pady=15)
+    student_button.grid(row=2, column=1, padx=25, pady=15)
+
+    root.mainloop()
