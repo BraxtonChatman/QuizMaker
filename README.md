@@ -42,12 +42,11 @@ From this screen you can see the spaces for the question list, current question,
 To the right of the sidebar and at the top, you will see the current question space, where the text for a quiz question may be written in, and below it is the answer space. The answer space has a dropdown box to select the question type after which, the corresponding answer selection space will be displayed.
 
 <img src="images/multiple_choice.png" width="400" />
-
 <img src="images/check_all.png" width="400" />
-
 <img src="images/true_false.png" width="400" />
-
 <img src="images/written_response.png" width="400" />
+
+
 
 Once a given question type has been selected, you may then fill in the answer options (for multiple choice and check all questions) and select the correct answer. Written response questions have a space for a correct answer, but they are left out when the program calculates a student's quiz score.
 
