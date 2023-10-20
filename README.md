@@ -18,6 +18,7 @@ In the future, I may change the login screen to perform account password verific
 
 # How to Install
 Download or clone the repository, and then quizmaker.py is readily available to be run.
+quizmaker_example.txt is available as an example quiz for either editing as a teacher or taking as a student.
 
 # How to Use
 Run quizmaker.py and you will be prompted to select either “teacher” or “student” which are selections as to whether you would like to create a quiz or take a quiz, respectively.
